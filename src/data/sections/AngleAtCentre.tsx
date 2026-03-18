@@ -349,13 +349,13 @@ export const angleAtCentreBlocks: ReactElement[] = [
             <EditableParagraph id="para-centre-intro" blockId="centre-intro">
                 Now let's compare an inscribed angle with the angle formed at the centre of the circle when both "look at" the same{" "}
                 <InlineSpotColor id="spot-arc-intro" color="#F8A0CD">arc</InlineSpotColor>
-                . The diagram shows two angles: an{" "}
-                <InlineSpotColor id="spot-centre-angle-intro" color="#F7B23B">amber angle at the centre</InlineSpotColor>
-                {" "}and a{" "}
-                <InlineSpotColor id="spot-inscribed-angle-intro" color="#62D0AD">teal inscribed angle</InlineSpotColor>
+                . The diagram shows two angles: the{" "}
+                <InlineSpotColor id="spot-centre-angle-intro" color="#F7B23B">angle at the centre</InlineSpotColor>
+                {" "}and the{" "}
+                <InlineSpotColor id="spot-inscribed-angle-intro" color="#62D0AD">inscribed angle</InlineSpotColor>
                 {" "}on the circumference. Both angles are formed by drawing lines to the same two{" "}
-                <InlineSpotColor id="spot-indigo-points-intro" color="#8E90F5">indigo points</InlineSpotColor>
-                {" "}that mark the arc endpoints.
+                <InlineSpotColor id="spot-indigo-points-intro" color="#8E90F5">arc endpoints</InlineSpotColor>
+                .
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -366,12 +366,12 @@ export const angleAtCentreBlocks: ReactElement[] = [
             <Block id="centre-explore-prompt" padding="sm">
                 <EditableParagraph id="para-centre-explore-prompt" blockId="centre-explore-prompt">
                     Drag the{" "}
-                    <InlineSpotColor id="spot-indigo-explore" color="#8E90F5">indigo arc endpoints</InlineSpotColor>
+                    <InlineSpotColor id="spot-indigo-explore" color="#8E90F5">arc endpoints</InlineSpotColor>
                     {" "}to make the{" "}
                     <InlineSpotColor id="spot-arc-explore" color="#F8A0CD">arc</InlineSpotColor>
                     {" "}larger or smaller. Drag the{" "}
-                    <InlineSpotColor id="spot-teal-explore" color="#62D0AD">teal point</InlineSpotColor>
-                    {" "}along the upper arc to move the inscribed angle vertex. Watch the angle measurements displayed on the diagram.
+                    <InlineSpotColor id="spot-teal-explore" color="#62D0AD">inscribed angle vertex</InlineSpotColor>
+                    {" "}along the upper arc. Watch the angle measurements displayed on the diagram.
                 </EditableParagraph>
             </Block>
             <Block id="centre-discovery" padding="sm">
