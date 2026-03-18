@@ -101,6 +101,19 @@ function MultipleInscribedAnglesVisualization() {
         arc: '#F8A0CD',
     };
 
+    // Calculate label offset position (towards center, away from the vertex)
+    const getLabelOffset = (point: [number, number]): [number, number] => {
+        // Direction from center to point
+        const dirX = point[0];
+        const dirY = point[1];
+        const mag = Math.hypot(dirX, dirY);
+        // Offset inward (towards center) by 0.8 units
+        return [
+            point[0] - (dirX / mag) * 0.9,
+            point[1] - (dirY / mag) * 0.9,
+        ];
+    };
+
     // Dynamic plots
     const dynamicPlots = useCallback((points: [number, number][]) => {
         const p1 = points[0] || [RADIUS * Math.cos(Math.PI * 0.8), RADIUS * Math.sin(Math.PI * 0.8)];
@@ -119,6 +132,11 @@ function MultipleInscribedAnglesVisualization() {
             setVar('inscribedAngle2', angle2);
             setVar('inscribedAngle3', angle3);
         }
+
+        // Calculate label positions
+        const label1Pos = getLabelOffset(p1);
+        const label2Pos = getLabelOffset(p2);
+        const label3Pos = getLabelOffset(p3);
 
         return [
             // Main circle
@@ -209,6 +227,28 @@ function MultipleInscribedAnglesVisualization() {
                 color: colors.arc,
                 weight: 4,
             },
+            // Angle labels near each vertex
+            {
+                type: "label" as const,
+                position: label1Pos as [number, number],
+                text: `${angle1}°`,
+                color: colors.point1,
+                size: 14,
+            },
+            {
+                type: "label" as const,
+                position: label2Pos as [number, number],
+                text: `${angle2}°`,
+                color: colors.point2,
+                size: 14,
+            },
+            {
+                type: "label" as const,
+                position: label3Pos as [number, number],
+                text: `${angle3}°`,
+                color: colors.point3,
+                size: 14,
+            },
         ];
     }, [angles, colors, setVar, arcStart, arcEnd]);
 
@@ -248,24 +288,6 @@ function MultipleInscribedAnglesVisualization() {
                     },
                 ]}
             />
-            {/* Angle display overlay */}
-            <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-sm border border-slate-200">
-                <div className="text-xs font-medium text-slate-500 mb-2">Inscribed Angles</div>
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.point1 }}></span>
-                        <span className="text-sm font-medium" style={{ color: colors.point1 }}>{angles[0]}°</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.point2 }}></span>
-                        <span className="text-sm font-medium" style={{ color: colors.point2 }}>{angles[1]}°</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.point3 }}></span>
-                        <span className="text-sm font-medium" style={{ color: colors.point3 }}>{angles[2]}°</span>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
