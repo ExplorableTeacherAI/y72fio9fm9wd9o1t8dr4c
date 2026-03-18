@@ -282,6 +282,9 @@ export const InlineFeedback: React.FC<InlineFeedbackProps> = ({
     const effectiveSuccessMessage = successMessage ?? defaults.success;
     const effectiveFailureMessage = failureMessage ?? defaults.failure;
 
+    // Track previous answer to reset feedback when answer changes
+    const prevAnswerRef = useRef<string>(storeValue);
+
     const hasAnswer = storeValue.trim() !== '';
     const isCorrect =
         hasAnswer &&
@@ -296,14 +299,27 @@ export const InlineFeedback: React.FC<InlineFeedbackProps> = ({
 
     const isCompact = position === 'mid';
 
-    // Fade-in animation
+    // Fade-in animation with reset when answer changes
     useEffect(() => {
+        // If the answer changed (not just from empty to filled), reset visibility briefly
+        if (prevAnswerRef.current !== storeValue && prevAnswerRef.current.trim() !== '' && hasAnswer) {
+            setVisible(false);
+            // Brief delay before showing new feedback
+            const timeout = setTimeout(() => {
+                setVisible(true);
+            }, 150);
+            prevAnswerRef.current = storeValue;
+            return () => clearTimeout(timeout);
+        }
+
+        prevAnswerRef.current = storeValue;
+
         if (hasAnswer) {
             const raf = requestAnimationFrame(() => setVisible(true));
             return () => cancelAnimationFrame(raf);
         }
         setVisible(false);
-    }, [hasAnswer]);
+    }, [hasAnswer, storeValue]);
 
     const handleVizHintClick = useCallback(() => {
         if (!visualizationHint) return;

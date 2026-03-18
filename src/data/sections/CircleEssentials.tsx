@@ -5,7 +5,7 @@
  * Students drag points to create radius, chord, and diameter.
  */
 
-import { type ReactElement, useCallback, useMemo } from "react";
+import { type ReactElement, useCallback } from "react";
 import { Block } from "@/components/templates";
 import { StackLayout, SplitLayout } from "@/components/layouts";
 import {
@@ -13,7 +13,6 @@ import {
     EditableH2,
     EditableParagraph,
     InlineLinkedHighlight,
-    InlineTooltip,
     InlineClozeChoice,
     InlineFeedback,
     Cartesian2D,
@@ -342,9 +341,25 @@ export const circleEssentialsBlocks: ReactElement[] = [
                     position="mid"
                     successMessage="✓"
                     failureMessage="✗"
-                    hint="Look at the teal line in the diagram"
+                    hint="Let's explore the diagram!"
                     reviewBlockId="essentials-vocab-radius"
                     reviewLabel="Review the radius definition"
+                    visualizationHint={{
+                        blockId: "essentials-diagram-viz",
+                        hintKey: "feedback-radius-hint",
+                        label: "Discover it yourself",
+                        resetVars: { circleHighlight: '' },
+                        steps: [
+                            {
+                                gesture: "hover",
+                                label: "Look at the teal line — it connects two specific points",
+                                position: { x: "60%", y: "50%" },
+                                completionVar: "circleHighlight",
+                                completionValue: "radius",
+                                completionTolerance: 0,
+                            },
+                        ],
+                    }}
                 >
                     <InlineClozeChoice
                         varName="answerRadiusDefinition"
