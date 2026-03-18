@@ -351,12 +351,19 @@ export const circleEssentialsBlocks: ReactElement[] = [
                         resetVars: { circleHighlight: '' },
                         steps: [
                             {
-                                gesture: "hover",
-                                label: "Look at the teal line — it connects two specific points",
-                                position: { x: "60%", y: "50%" },
-                                completionVar: "circleHighlight",
-                                completionValue: "radius",
-                                completionTolerance: 0,
+                                gesture: "click",
+                                label: "First, find the orange dot in the middle — this is the centre",
+                                position: { x: "50%", y: "50%" },
+                            },
+                            {
+                                gesture: "drag-horizontal",
+                                label: "Now look at the teal line going from the centre to the edge",
+                                position: { x: "62%", y: "50%" },
+                            },
+                            {
+                                gesture: "drag-circular",
+                                label: "Drag the teal point around — the line always connects centre to edge!",
+                                position: { x: "75%", y: "50%" },
                             },
                         ],
                     }}
@@ -384,9 +391,32 @@ export const circleEssentialsBlocks: ReactElement[] = [
                     position="terminal"
                     successMessage="— exactly! The diameter is the special chord that passes through the centre"
                     failureMessage="— not quite"
-                    hint="Which chord passes through the very centre of the circle?"
+                    hint="Let's explore!"
                     reviewBlockId="essentials-vocab-diameter"
                     reviewLabel="Review the diameter"
+                    visualizationHint={{
+                        blockId: "essentials-diagram-viz",
+                        hintKey: "feedback-diameter-hint",
+                        label: "Discover it yourself",
+                        resetVars: { circleHighlight: '' },
+                        steps: [
+                            {
+                                gesture: "click",
+                                label: "Look at the purple dashed line — it goes all the way across",
+                                position: { x: "50%", y: "50%" },
+                            },
+                            {
+                                gesture: "drag-horizontal",
+                                label: "Notice it passes through the orange centre point",
+                                position: { x: "50%", y: "50%" },
+                            },
+                            {
+                                gesture: "click",
+                                label: "This is the longest chord because it spans the full width!",
+                                position: { x: "25%", y: "50%" },
+                            },
+                        ],
+                    }}
                 >
                     <InlineClozeChoice
                         varName="answerChordVsDiameter"
