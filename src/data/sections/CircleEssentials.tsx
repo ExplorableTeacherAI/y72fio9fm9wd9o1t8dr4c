@@ -338,13 +338,13 @@ export const circleEssentialsBlocks: ReactElement[] = [
     <StackLayout key="layout-essentials-question-radius" maxWidth="xl">
         <Block id="essentials-question-radius" padding="sm">
             <EditableParagraph id="para-essentials-question-radius" blockId="essentials-question-radius">
-                A radius connects{" "}
+                A radius of a circle connects{" "}
                 <InlineFeedback
                     varName="answerRadiusDefinition"
                     correctValue="centre to edge"
-                    position="mid"
-                    successMessage="✓"
-                    failureMessage="✗"
+                    position="terminal"
+                    successMessage="— that's right!"
+                    failureMessage="— not quite"
                     hint="Let's explore the diagram!"
                     reviewBlockId="essentials-vocab-radius"
                     reviewLabel="Review the radius definition"
@@ -355,19 +355,19 @@ export const circleEssentialsBlocks: ReactElement[] = [
                         resetVars: { circleHighlight: '' },
                         steps: [
                             {
-                                gesture: "click",
-                                label: "First, find the orange dot in the middle — this is the centre",
-                                position: { x: "50%", y: "50%" },
-                            },
-                            {
-                                gesture: "drag-horizontal",
-                                label: "Now look at the teal line going from the centre to the edge",
-                                position: { x: "62%", y: "50%" },
+                                gesture: "drag-circular",
+                                label: "Drag the teal point on the circle's edge",
+                                position: { x: "75%", y: "50%" },
                             },
                             {
                                 gesture: "drag-circular",
-                                label: "Drag the teal point around — the line always connects centre to edge!",
-                                position: { x: "75%", y: "50%" },
+                                label: "Notice the teal line always stays connected to the orange centre",
+                                position: { x: "50%", y: "50%" },
+                            },
+                            {
+                                gesture: "click",
+                                label: "A radius always connects the centre to the edge!",
+                                position: { x: "62%", y: "50%" },
                             },
                         ],
                     }}
@@ -378,8 +378,7 @@ export const circleEssentialsBlocks: ReactElement[] = [
                         options={["edge to edge", "centre to edge", "around the circle"]}
                         {...choicePropsFromDefinition(getVariableInfo('answerRadiusDefinition'))}
                     />
-                </InlineFeedback>{" "}
-                of the circle.
+                </InlineFeedback>.
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -405,19 +404,19 @@ export const circleEssentialsBlocks: ReactElement[] = [
                         resetVars: { circleHighlight: '' },
                         steps: [
                             {
-                                gesture: "click",
-                                label: "Look at the purple dashed line — it goes all the way across",
+                                gesture: "drag-circular",
+                                label: "Drag one of the purple chord points around the circle",
+                                position: { x: "22%", y: "72%" },
+                            },
+                            {
+                                gesture: "drag-circular",
+                                label: "Keep dragging until the chord passes through the orange centre",
                                 position: { x: "50%", y: "50%" },
                             },
                             {
-                                gesture: "drag-horizontal",
-                                label: "Notice it passes through the orange centre point",
-                                position: { x: "50%", y: "50%" },
-                            },
-                            {
                                 gesture: "click",
-                                label: "This is the longest chord because it spans the full width!",
-                                position: { x: "25%", y: "50%" },
+                                label: "When a chord goes through the centre, it's called a diameter — the longest possible chord!",
+                                position: { x: "50%", y: "50%" },
                             },
                         ],
                     }}
