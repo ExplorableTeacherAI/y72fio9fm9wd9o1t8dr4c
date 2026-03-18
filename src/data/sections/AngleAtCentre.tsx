@@ -474,7 +474,27 @@ export const angleAtCentreBlocks: ReactElement[] = [
             </Block>
             <Block id="centre-theorem-statement" padding="sm">
                 <EditableParagraph id="para-centre-theorem-statement" blockId="centre-theorem-statement">
-                    This is the first major circle theorem: the angle at the centre is double the angle at the circumference when both subtend the same{" "}
+                    This is the first major circle theorem: the{" "}
+                    <InlineLinkedHighlight
+                        varName="centreTheoremHighlight"
+                        highlightId="centreAngle"
+                        color="#F7B23B"
+                        bgColor="rgba(247, 178, 59, 0.15)"
+                    >
+                        angle at the centre
+                    </InlineLinkedHighlight>
+                    {" "}is{" "}
+                    <InlineSpotColor id="spot-double" color="#F7B23B">double</InlineSpotColor>
+                    {" "}the{" "}
+                    <InlineLinkedHighlight
+                        varName="centreTheoremHighlight"
+                        highlightId="inscribedAngle"
+                        color="#62D0AD"
+                        bgColor="rgba(98, 208, 173, 0.15)"
+                    >
+                        angle at the circumference
+                    </InlineLinkedHighlight>
+                    {" "}when both subtend the same{" "}
                     <InlineLinkedHighlight
                         varName="centreTheoremHighlight"
                         highlightId="arc"
