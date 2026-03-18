@@ -11,10 +11,9 @@ import { StackLayout, SplitLayout } from "@/components/layouts";
 import {
     EditableH2,
     EditableParagraph,
-    InlineTooltip,
     InlineClozeInput,
     InlineFeedback,
-    InlineSpotColor,
+    InlineLinkedHighlight,
     Cartesian2D,
     InteractionHintSequence,
 } from "@/components/atoms";
@@ -199,6 +198,7 @@ function CentreVsInscribedVisualization() {
                 x: 0,
                 y: 0,
                 color: colors.centre,
+                highlightId: 'centreAngle',
             },
             // Centre angle lines (from centre to arc endpoints)
             {
@@ -207,6 +207,7 @@ function CentreVsInscribedVisualization() {
                 point2: arcStart,
                 color: colors.centre,
                 weight: 3,
+                highlightId: 'centreAngle',
             },
             {
                 type: "segment" as const,
@@ -214,6 +215,7 @@ function CentreVsInscribedVisualization() {
                 point2: arcEnd,
                 color: colors.centre,
                 weight: 3,
+                highlightId: 'centreAngle',
             },
             // Centre angle arc indicator
             {
@@ -222,6 +224,7 @@ function CentreVsInscribedVisualization() {
                 tRange: [0, 1] as [number, number],
                 color: colors.centre,
                 weight: 2.5,
+                highlightId: 'centreAngle',
             },
             // Inscribed angle lines (from circumference vertex to arc endpoints)
             {
@@ -230,6 +233,7 @@ function CentreVsInscribedVisualization() {
                 point2: arcStart,
                 color: colors.inscribed,
                 weight: 3,
+                highlightId: 'inscribedAngle',
             },
             {
                 type: "segment" as const,
@@ -237,6 +241,7 @@ function CentreVsInscribedVisualization() {
                 point2: arcEnd,
                 color: colors.inscribed,
                 weight: 3,
+                highlightId: 'inscribedAngle',
             },
             // Inscribed angle arc indicator
             {
@@ -245,6 +250,7 @@ function CentreVsInscribedVisualization() {
                 tRange: [0, 1] as [number, number],
                 color: colors.inscribed,
                 weight: 2.5,
+                highlightId: 'inscribedAngle',
             },
             // Arc (between the two arc points, going through bottom)
             {
@@ -260,6 +266,22 @@ function CentreVsInscribedVisualization() {
                 tRange: [0, 1] as [number, number],
                 color: colors.arc,
                 weight: 4,
+                highlightId: 'arc',
+            },
+            // Arc endpoints (for highlighting)
+            {
+                type: "point" as const,
+                x: arcStart[0],
+                y: arcStart[1],
+                color: colors.arcPoints,
+                highlightId: 'arcEndpoints',
+            },
+            {
+                type: "point" as const,
+                x: arcEnd[0],
+                y: arcEnd[1],
+                color: colors.arcPoints,
+                highlightId: 'arcEndpoints',
             },
         ];
     }, [centreAngle, inscribedAngle, colors, setVar]);
@@ -270,6 +292,7 @@ function CentreVsInscribedVisualization() {
                 height={HEIGHT}
                 viewBox={VIEW_BOX}
                 showGrid={false}
+                highlightVarName="centreTheoremHighlight"
                 movablePoints={[
                     {
                         initial: [RADIUS * Math.cos(Math.PI * 1.25), RADIUS * Math.sin(Math.PI * 1.25)],
@@ -348,13 +371,41 @@ export const angleAtCentreBlocks: ReactElement[] = [
         <Block id="centre-intro" padding="sm">
             <EditableParagraph id="para-centre-intro" blockId="centre-intro">
                 Now let's compare an inscribed angle with the angle formed at the centre of the circle when both "look at" the same{" "}
-                <InlineSpotColor id="spot-arc-intro" color="#F8A0CD">arc</InlineSpotColor>
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="arc"
+                    color="#F8A0CD"
+                    bgColor="rgba(248, 160, 205, 0.15)"
+                >
+                    arc
+                </InlineLinkedHighlight>
                 . The diagram shows two angles: the{" "}
-                <InlineSpotColor id="spot-centre-angle-intro" color="#F7B23B">angle at the centre</InlineSpotColor>
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="centreAngle"
+                    color="#F7B23B"
+                    bgColor="rgba(247, 178, 59, 0.15)"
+                >
+                    angle at the centre
+                </InlineLinkedHighlight>
                 {" "}and the{" "}
-                <InlineSpotColor id="spot-inscribed-angle-intro" color="#62D0AD">inscribed angle</InlineSpotColor>
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="inscribedAngle"
+                    color="#62D0AD"
+                    bgColor="rgba(98, 208, 173, 0.15)"
+                >
+                    inscribed angle
+                </InlineLinkedHighlight>
                 {" "}on the circumference. Both angles are formed by drawing lines to the same two{" "}
-                <InlineSpotColor id="spot-indigo-points-intro" color="#8E90F5">arc endpoints</InlineSpotColor>
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="arcEndpoints"
+                    color="#8E90F5"
+                    bgColor="rgba(142, 144, 245, 0.15)"
+                >
+                    arc endpoints
+                </InlineLinkedHighlight>
                 .
             </EditableParagraph>
         </Block>
@@ -366,22 +417,64 @@ export const angleAtCentreBlocks: ReactElement[] = [
             <Block id="centre-explore-prompt" padding="sm">
                 <EditableParagraph id="para-centre-explore-prompt" blockId="centre-explore-prompt">
                     Drag the{" "}
-                    <InlineSpotColor id="spot-indigo-explore" color="#8E90F5">arc endpoints</InlineSpotColor>
+                    <InlineLinkedHighlight
+                        varName="centreTheoremHighlight"
+                        highlightId="arcEndpoints"
+                        color="#8E90F5"
+                        bgColor="rgba(142, 144, 245, 0.15)"
+                    >
+                        arc endpoints
+                    </InlineLinkedHighlight>
                     {" "}to make the{" "}
-                    <InlineSpotColor id="spot-arc-explore" color="#F8A0CD">arc</InlineSpotColor>
+                    <InlineLinkedHighlight
+                        varName="centreTheoremHighlight"
+                        highlightId="arc"
+                        color="#F8A0CD"
+                        bgColor="rgba(248, 160, 205, 0.15)"
+                    >
+                        arc
+                    </InlineLinkedHighlight>
                     {" "}larger or smaller. Drag the{" "}
-                    <InlineSpotColor id="spot-teal-explore" color="#62D0AD">inscribed angle vertex</InlineSpotColor>
+                    <InlineLinkedHighlight
+                        varName="centreTheoremHighlight"
+                        highlightId="inscribedAngle"
+                        color="#62D0AD"
+                        bgColor="rgba(98, 208, 173, 0.15)"
+                    >
+                        inscribed angle vertex
+                    </InlineLinkedHighlight>
                     {" "}along the upper arc. Watch the angle measurements displayed on the diagram.
                 </EditableParagraph>
             </Block>
             <Block id="centre-discovery" padding="sm">
                 <EditableParagraph id="para-centre-discovery" blockId="centre-discovery">
                     Do you see the pattern? No matter how you arrange the points, the ratio stays remarkably constant. The{" "}
-                    <InlineSpotColor id="spot-centre-discovery" color="#F7B23B">centre angle</InlineSpotColor>
+                    <InlineLinkedHighlight
+                        varName="centreTheoremHighlight"
+                        highlightId="centreAngle"
+                        color="#F7B23B"
+                        bgColor="rgba(247, 178, 59, 0.15)"
+                    >
+                        centre angle
+                    </InlineLinkedHighlight>
                     {" "}is always exactly twice the{" "}
-                    <InlineSpotColor id="spot-inscribed-discovery" color="#62D0AD">inscribed angle</InlineSpotColor>
+                    <InlineLinkedHighlight
+                        varName="centreTheoremHighlight"
+                        highlightId="inscribedAngle"
+                        color="#62D0AD"
+                        bgColor="rgba(98, 208, 173, 0.15)"
+                    >
+                        inscribed angle
+                    </InlineLinkedHighlight>
                     . This is the first major circle theorem: the angle at the centre is double the angle at the circumference when both subtend the same{" "}
-                    <InlineSpotColor id="spot-arc-discovery" color="#F8A0CD">arc</InlineSpotColor>
+                    <InlineLinkedHighlight
+                        varName="centreTheoremHighlight"
+                        highlightId="arc"
+                        color="#F8A0CD"
+                        bgColor="rgba(248, 160, 205, 0.15)"
+                    >
+                        arc
+                    </InlineLinkedHighlight>
                     .
                 </EditableParagraph>
             </Block>
