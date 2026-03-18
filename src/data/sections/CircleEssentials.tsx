@@ -17,6 +17,7 @@ import {
     InlineFeedback,
     Cartesian2D,
     InteractionHintSequence,
+    TriggeredHintOverlay,
 } from "@/components/atoms";
 import {
     getVariableInfo,
@@ -183,6 +184,9 @@ function DrawCirclePartsVisualization() {
                     },
                 ]}
             />
+            {/* Triggered hint overlays for feedback-guided discovery */}
+            <TriggeredHintOverlay hintKey="feedback-radius-hint" color="#62D0AD" />
+            <TriggeredHintOverlay hintKey="feedback-diameter-hint" color="#8E90F5" />
         </div>
     );
 }
