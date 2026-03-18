@@ -508,7 +508,11 @@ export const angleAtCentreBlocks: ReactElement[] = [
             </Block>
             <Block id="centre-formula" padding="sm">
                 <FormulaBlock
-                    latex="\text{Centre angle} = 2 \times \text{Inscribed angle}"
+                    latex="\clr{centreAngle}{\text{Centre angle}} = 2 \times \clr{inscribedAngle}{\text{Inscribed angle}}"
+                    colorMap={{
+                        centreAngle: "#F7B23B",
+                        inscribedAngle: "#62D0AD",
+                    }}
                 />
             </Block>
             <Block id="centre-explanation" padding="sm">
