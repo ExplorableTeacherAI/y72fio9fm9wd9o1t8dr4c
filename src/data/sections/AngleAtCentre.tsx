@@ -616,6 +616,7 @@ export const angleAtCentreBlocks: ReactElement[] = [
                     <InlineClozeInput
                         varName="answerCentreAngleRelation"
                         correctAnswer="2"
+                        showHint={true}
                         {...clozePropsFromDefinition(getVariableInfo('answerCentreAngleRelation'))}
                     />
                 </InlineFeedback>{" "}
@@ -656,6 +657,7 @@ export const angleAtCentreBlocks: ReactElement[] = [
                     <InlineClozeInput
                         varName="answerCentreAngleCalculation"
                         correctAnswer="62"
+                        showHint={true}
                         {...clozePropsFromDefinition(getVariableInfo('answerCentreAngleCalculation'))}
                     />
                 </InlineFeedback>°.
