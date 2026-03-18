@@ -515,16 +515,20 @@ export const angleAtCentreBlocks: ReactElement[] = [
                     }}
                 />
             </Block>
-            <Block id="centre-explanation" padding="sm">
-                <EditableParagraph id="para-centre-explanation" blockId="centre-explanation">
-                    This theorem explains why all inscribed angles on the same arc are equal (as you discovered in the previous section). Each inscribed angle is exactly half the centre angle — and since the centre angle stays fixed when you move the vertex along the arc, all the inscribed angles must be equal to each other.
-                </EditableParagraph>
-            </Block>
         </div>
         <Block id="centre-diagram-viz" padding="sm" hasVisualization>
             <CentreVsInscribedVisualization />
         </Block>
     </SplitLayout>,
+
+    // Explanation (full width)
+    <StackLayout key="layout-centre-explanation" maxWidth="xl">
+        <Block id="centre-explanation" padding="sm">
+            <EditableParagraph id="para-centre-explanation" blockId="centre-explanation">
+                This theorem explains why all inscribed angles on the same arc are equal (as you discovered in the previous section). Each inscribed angle is exactly half the centre angle — and since the centre angle stays fixed when you move the vertex along the arc, all the inscribed angles must be equal to each other.
+            </EditableParagraph>
+        </Block>
+    </StackLayout>,
 
     // Quick check heading
     <StackLayout key="layout-centre-check-heading" maxWidth="xl">
