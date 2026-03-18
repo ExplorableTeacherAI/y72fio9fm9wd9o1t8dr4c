@@ -598,15 +598,6 @@ export const angleAtCentreBlocks: ReactElement[] = [
         </Block>
     </StackLayout>,
 
-    // Quick check heading
-    <StackLayout key="layout-centre-check-heading" maxWidth="xl">
-        <Block id="centre-check-heading" padding="md">
-            <EditableH2 id="h2-centre-check-heading" blockId="centre-check-heading">
-                Quick Check
-            </EditableH2>
-        </Block>
-    </StackLayout>,
-
     // Question 1
     <StackLayout key="layout-centre-question-relation" maxWidth="xl">
         <Block id="centre-question-relation" padding="sm">
