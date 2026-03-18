@@ -5,7 +5,7 @@
  * Side-by-side comparison with live angle measurements.
  */
 
-import { type ReactElement, useCallback, useState } from "react";
+import { type ReactElement, useCallback, useState, useRef } from "react";
 import { Block } from "@/components/templates";
 import { StackLayout, SplitLayout } from "@/components/layouts";
 import {
@@ -28,19 +28,73 @@ import { useSetVar } from "@/stores";
 // Helper: Calculate angle between two vectors
 // ─────────────────────────────────────────────────────────────────────────────
 
-function calculateAngle(
+interface AngleInfo {
+    degrees: number;
+    startAngle: number;
+    endAngle: number;
+}
+
+function calculateAngleInfo(
     vertex: [number, number],
     point1: [number, number],
     point2: [number, number]
-): number {
+): AngleInfo {
     const v1 = [point1[0] - vertex[0], point1[1] - vertex[1]];
     const v2 = [point2[0] - vertex[0], point2[1] - vertex[1]];
+
+    const angle1 = Math.atan2(v1[1], v1[0]);
+    const angle2 = Math.atan2(v2[1], v2[0]);
+
     const dot = v1[0] * v2[0] + v1[1] * v2[1];
     const mag1 = Math.hypot(v1[0], v1[1]);
     const mag2 = Math.hypot(v2[0], v2[1]);
-    if (mag1 === 0 || mag2 === 0) return 0;
+    if (mag1 === 0 || mag2 === 0) return { degrees: 0, startAngle: 0, endAngle: 0 };
     const cosAngle = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
-    return Math.round(Math.acos(cosAngle) * (180 / Math.PI));
+    const degrees = Math.round(Math.acos(cosAngle) * (180 / Math.PI));
+
+    return { degrees, startAngle: angle1, endAngle: angle2 };
+}
+
+// Helper to create angle arc parametric function
+function createAngleArc(
+    vertex: [number, number],
+    startAngle: number,
+    endAngle: number,
+    radius: number
+): (t: number) => [number, number] {
+    let start = startAngle;
+    let end = endAngle;
+
+    // Ensure we go the shorter way around
+    while (end - start > Math.PI) end -= 2 * Math.PI;
+    while (start - end > Math.PI) start -= 2 * Math.PI;
+
+    return (t: number): [number, number] => {
+        const angle = start + t * (end - start);
+        return [
+            vertex[0] + radius * Math.cos(angle),
+            vertex[1] + radius * Math.sin(angle)
+        ];
+    };
+}
+
+// Calculate label position along the angle bisector
+function getLabelPosition(
+    vertex: [number, number],
+    startAngle: number,
+    endAngle: number,
+    offset: number
+): [number, number] {
+    let start = startAngle;
+    let end = endAngle;
+    while (end - start > Math.PI) end -= 2 * Math.PI;
+    while (start - end > Math.PI) start -= 2 * Math.PI;
+
+    const bisector = (start + end) / 2;
+    return [
+        vertex[0] + offset * Math.cos(bisector),
+        vertex[1] + offset * Math.sin(bisector)
+    ];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -51,10 +105,18 @@ function CentreVsInscribedVisualization() {
     const setVar = useSetVar();
     const RADIUS = 3;
     const CENTER: [number, number] = [0, 0];
+    const ANGLE_ARC_RADIUS = 0.6;
+    const VIEW_BOX = { x: [-4.5, 4.5] as [number, number], y: [-4.5, 4.5] as [number, number] };
+    const HEIGHT = 400;
 
     // Track angles for display
     const [centreAngle, setCentreAngle] = useState(90);
     const [inscribedAngle, setInscribedAngle] = useState(45);
+    const [renderTrigger, setRenderTrigger] = useState(0);
+
+    // Refs for label positions
+    const centreLabelPosRef = useRef<[number, number]>([0.8, 0.8]);
+    const inscribedLabelPosRef = useRef<[number, number]>([0, 2.5]);
 
     // Constrain to circle
     const constrainToCircle = useCallback((point: [number, number]): [number, number] => {
@@ -80,6 +142,20 @@ function CentreVsInscribedVisualization() {
         arc: '#F8A0CD',
     };
 
+    // Handler to trigger re-render when points move
+    const handlePointChange = useCallback(() => {
+        setRenderTrigger(prev => prev + 1);
+    }, []);
+
+    // Convert math coordinates to percentage position for CSS overlay
+    const mathToPercent = (mathPos: [number, number]): { left: string; top: string } => {
+        const [xMin, xMax] = VIEW_BOX.x;
+        const [yMin, yMax] = VIEW_BOX.y;
+        const leftPercent = ((mathPos[0] - xMin) / (xMax - xMin)) * 100;
+        const topPercent = ((yMax - mathPos[1]) / (yMax - yMin)) * 100;
+        return { left: `${leftPercent}%`, top: `${topPercent}%` };
+    };
+
     // Dynamic plots
     const dynamicPlots = useCallback((points: [number, number][]) => {
         // Arc endpoints (movable)
@@ -88,9 +164,16 @@ function CentreVsInscribedVisualization() {
         // Inscribed angle vertex
         const inscribedVertex = points[2] || [RADIUS * Math.cos(Math.PI * 0.5), RADIUS * Math.sin(Math.PI * 0.5)];
 
-        // Calculate angles
-        const cAngle = calculateAngle(CENTER, arcStart, arcEnd);
-        const iAngle = calculateAngle(inscribedVertex, arcStart, arcEnd);
+        // Calculate angles with direction info
+        const centreAngleInfo = calculateAngleInfo(CENTER, arcStart, arcEnd);
+        const inscribedAngleInfo = calculateAngleInfo(inscribedVertex, arcStart, arcEnd);
+
+        const cAngle = centreAngleInfo.degrees;
+        const iAngle = inscribedAngleInfo.degrees;
+
+        // Calculate label positions along bisector
+        centreLabelPosRef.current = getLabelPosition(CENTER, centreAngleInfo.startAngle, centreAngleInfo.endAngle, ANGLE_ARC_RADIUS + 0.5);
+        inscribedLabelPosRef.current = getLabelPosition(inscribedVertex, inscribedAngleInfo.startAngle, inscribedAngleInfo.endAngle, ANGLE_ARC_RADIUS + 0.5);
 
         // Update display
         if (cAngle !== centreAngle || iAngle !== inscribedAngle) {
@@ -131,6 +214,14 @@ function CentreVsInscribedVisualization() {
                 color: colors.centre,
                 weight: 3,
             },
+            // Centre angle arc indicator
+            {
+                type: "parametric" as const,
+                xy: createAngleArc(CENTER, centreAngleInfo.startAngle, centreAngleInfo.endAngle, ANGLE_ARC_RADIUS),
+                tRange: [0, 1] as [number, number],
+                color: colors.centre,
+                weight: 2.5,
+            },
             // Inscribed angle lines (from circumference vertex to arc endpoints)
             {
                 type: "segment" as const,
@@ -145,6 +236,14 @@ function CentreVsInscribedVisualization() {
                 point2: arcEnd,
                 color: colors.inscribed,
                 weight: 3,
+            },
+            // Inscribed angle arc indicator
+            {
+                type: "parametric" as const,
+                xy: createAngleArc(inscribedVertex, inscribedAngleInfo.startAngle, inscribedAngleInfo.endAngle, ANGLE_ARC_RADIUS),
+                tRange: [0, 1] as [number, number],
+                color: colors.inscribed,
+                weight: 2.5,
             },
             // Arc (between the two arc points, going through bottom)
             {
@@ -167,28 +266,53 @@ function CentreVsInscribedVisualization() {
     return (
         <div className="relative">
             <Cartesian2D
-                height={400}
-                viewBox={{ x: [-4.5, 4.5], y: [-4.5, 4.5] }}
+                height={HEIGHT}
+                viewBox={VIEW_BOX}
                 showGrid={false}
                 movablePoints={[
                     {
                         initial: [RADIUS * Math.cos(Math.PI * 1.25), RADIUS * Math.sin(Math.PI * 1.25)],
                         color: colors.arcPoints,
                         constrain: constrainToCircle,
+                        onChange: handlePointChange,
                     },
                     {
                         initial: [RADIUS * Math.cos(-Math.PI * 0.25), RADIUS * Math.sin(-Math.PI * 0.25)],
                         color: colors.arcPoints,
                         constrain: constrainToCircle,
+                        onChange: handlePointChange,
                     },
                     {
                         initial: [RADIUS * Math.cos(Math.PI * 0.5), RADIUS * Math.sin(Math.PI * 0.5)],
                         color: colors.inscribed,
                         constrain: constrainToUpperArc,
+                        onChange: handlePointChange,
                     },
                 ]}
                 dynamicPlots={dynamicPlots}
             />
+            {/* Angle labels overlay - positioned on the graph */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ height: HEIGHT }}
+            >
+                {/* Centre angle label */}
+                <span
+                    key={`centre-label-${renderTrigger}`}
+                    className="absolute text-sm font-semibold -translate-x-1/2 -translate-y-1/2"
+                    style={{ ...mathToPercent(centreLabelPosRef.current), color: colors.centre }}
+                >
+                    {centreAngle}°
+                </span>
+                {/* Inscribed angle label */}
+                <span
+                    key={`inscribed-label-${renderTrigger}`}
+                    className="absolute text-sm font-semibold -translate-x-1/2 -translate-y-1/2"
+                    style={{ ...mathToPercent(inscribedLabelPosRef.current), color: colors.inscribed }}
+                >
+                    {inscribedAngle}°
+                </span>
+            </div>
             <InteractionHintSequence
                 hintKey="centre-angle-drag"
                 steps={[
@@ -200,7 +324,7 @@ function CentreVsInscribedVisualization() {
                     },
                 ]}
             />
-            {/* Angle display overlay */}
+            {/* Ratio display overlay */}
             <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-sm border border-slate-200">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2">
