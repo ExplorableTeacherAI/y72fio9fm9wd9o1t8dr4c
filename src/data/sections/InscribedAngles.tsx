@@ -29,25 +29,60 @@ import { useVar, useSetVar } from "@/stores";
 // Helper: Calculate angle at vertex from two points
 // ─────────────────────────────────────────────────────────────────────────────
 
-function calculateInscribedAngle(
+interface AngleInfo {
+    degrees: number;
+    startAngle: number; // radians, direction to point1
+    endAngle: number;   // radians, direction to point2
+}
+
+function calculateInscribedAngleInfo(
     vertex: [number, number],
     point1: [number, number],
     point2: [number, number]
-): number {
+): AngleInfo {
     // Vectors from vertex to each point
     const v1 = [point1[0] - vertex[0], point1[1] - vertex[1]];
     const v2 = [point2[0] - vertex[0], point2[1] - vertex[1]];
 
-    // Dot product and magnitudes
+    // Angles of each vector (direction from vertex)
+    const angle1 = Math.atan2(v1[1], v1[0]);
+    const angle2 = Math.atan2(v2[1], v2[0]);
+
+    // Dot product and magnitudes for the angle between them
     const dot = v1[0] * v2[0] + v1[1] * v2[1];
     const mag1 = Math.hypot(v1[0], v1[1]);
     const mag2 = Math.hypot(v2[0], v2[1]);
 
-    if (mag1 === 0 || mag2 === 0) return 0;
+    if (mag1 === 0 || mag2 === 0) return { degrees: 0, startAngle: 0, endAngle: 0 };
 
-    // Angle in radians, then convert to degrees
     const cosAngle = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
-    return Math.round(Math.acos(cosAngle) * (180 / Math.PI));
+    const degrees = Math.round(Math.acos(cosAngle) * (180 / Math.PI));
+
+    return { degrees, startAngle: angle1, endAngle: angle2 };
+}
+
+// Helper to create angle arc parametric function
+function createAngleArc(
+    vertex: [number, number],
+    startAngle: number,
+    endAngle: number,
+    radius: number
+): (t: number) => [number, number] {
+    // Ensure we go the shorter way around
+    let start = startAngle;
+    let end = endAngle;
+
+    // Normalize angles
+    while (end - start > Math.PI) end -= 2 * Math.PI;
+    while (start - end > Math.PI) start -= 2 * Math.PI;
+
+    return (t: number): [number, number] => {
+        const angle = start + t * (end - start);
+        return [
+            vertex[0] + radius * Math.cos(angle),
+            vertex[1] + radius * Math.sin(angle)
+        ];
+    };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,6 +92,10 @@ function calculateInscribedAngle(
 function MultipleInscribedAnglesVisualization() {
     const setVar = useSetVar();
     const RADIUS = 3;
+
+    // ViewBox settings for coordinate conversion
+    const VIEW_BOX = { x: [-4.5, 4.5] as [number, number], y: [-4.5, 4.5] as [number, number] };
+    const HEIGHT = 380;
 
     // Fixed arc endpoints (chord)
     const arcStart: [number, number] = [
@@ -68,8 +107,11 @@ function MultipleInscribedAnglesVisualization() {
         RADIUS * Math.sin(-Math.PI * 0.2)
     ];
 
-    // Track angles for display
+    // Track angles and label positions for display
     const [angles, setAngles] = useState<[number, number, number]>([45, 45, 45]);
+    const [labelPositions, setLabelPositions] = useState<[[number, number], [number, number], [number, number]]>([
+        [0, 0], [0, 0], [0, 0]
+    ]);
 
     // Constrain points to the major arc (upper portion)
     const constrainToMajorArc = useCallback((point: [number, number]): [number, number] => {
@@ -101,16 +143,26 @@ function MultipleInscribedAnglesVisualization() {
         arc: '#F8A0CD',
     };
 
-    // Calculate label offset position (towards center, away from the vertex)
-    const getLabelOffset = (point: [number, number]): [number, number] => {
-        // Direction from center to point
-        const dirX = point[0];
-        const dirY = point[1];
-        const mag = Math.hypot(dirX, dirY);
-        // Offset inward (towards center) by 0.8 units
+    // Radius for the angle arc indicator
+    const ANGLE_ARC_RADIUS = 0.5;
+
+    // Calculate label position along the angle bisector
+    const getLabelPosition = (
+        vertex: [number, number],
+        startAngle: number,
+        endAngle: number,
+        offset: number
+    ): [number, number] => {
+        // Normalize angles to get the bisector
+        let start = startAngle;
+        let end = endAngle;
+        while (end - start > Math.PI) end -= 2 * Math.PI;
+        while (start - end > Math.PI) start -= 2 * Math.PI;
+
+        const bisector = (start + end) / 2;
         return [
-            point[0] - (dirX / mag) * 0.9,
-            point[1] - (dirY / mag) * 0.9,
+            vertex[0] + offset * Math.cos(bisector),
+            vertex[1] + offset * Math.sin(bisector)
         ];
     };
 
@@ -120,23 +172,26 @@ function MultipleInscribedAnglesVisualization() {
         const p2 = points[1] || [RADIUS * Math.cos(Math.PI * 0.55), RADIUS * Math.sin(Math.PI * 0.55)];
         const p3 = points[2] || [RADIUS * Math.cos(Math.PI * 0.35), RADIUS * Math.sin(Math.PI * 0.35)];
 
-        // Calculate angles
-        const angle1 = calculateInscribedAngle(p1, arcStart, arcEnd);
-        const angle2 = calculateInscribedAngle(p2, arcStart, arcEnd);
-        const angle3 = calculateInscribedAngle(p3, arcStart, arcEnd);
+        // Calculate angles with direction info
+        const angleInfo1 = calculateInscribedAngleInfo(p1, arcStart, arcEnd);
+        const angleInfo2 = calculateInscribedAngleInfo(p2, arcStart, arcEnd);
+        const angleInfo3 = calculateInscribedAngleInfo(p3, arcStart, arcEnd);
 
         // Update state (will be used for display)
-        if (angle1 !== angles[0] || angle2 !== angles[1] || angle3 !== angles[2]) {
-            setAngles([angle1, angle2, angle3]);
-            setVar('inscribedAngle1', angle1);
-            setVar('inscribedAngle2', angle2);
-            setVar('inscribedAngle3', angle3);
+        if (angleInfo1.degrees !== angles[0] || angleInfo2.degrees !== angles[1] || angleInfo3.degrees !== angles[2]) {
+            setAngles([angleInfo1.degrees, angleInfo2.degrees, angleInfo3.degrees]);
+            setVar('inscribedAngle1', angleInfo1.degrees);
+            setVar('inscribedAngle2', angleInfo2.degrees);
+            setVar('inscribedAngle3', angleInfo3.degrees);
         }
 
-        // Calculate label positions
-        const label1Pos = getLabelOffset(p1);
-        const label2Pos = getLabelOffset(p2);
-        const label3Pos = getLabelOffset(p3);
+        // Calculate label positions along bisector, further out from the arc
+        const label1Pos = getLabelPosition(p1, angleInfo1.startAngle, angleInfo1.endAngle, ANGLE_ARC_RADIUS + 0.5);
+        const label2Pos = getLabelPosition(p2, angleInfo2.startAngle, angleInfo2.endAngle, ANGLE_ARC_RADIUS + 0.5);
+        const label3Pos = getLabelPosition(p3, angleInfo3.startAngle, angleInfo3.endAngle, ANGLE_ARC_RADIUS + 0.5);
+
+        // Update label positions for overlay rendering
+        setLabelPositions([label1Pos, label2Pos, label3Pos]);
 
         return [
             // Main circle
@@ -227,36 +282,47 @@ function MultipleInscribedAnglesVisualization() {
                 color: colors.arc,
                 weight: 4,
             },
-            // Angle labels near each vertex
+            // Angle arc 1 (curved arc indicator at vertex)
             {
-                type: "label" as const,
-                position: label1Pos as [number, number],
-                text: `${angle1}°`,
+                type: "parametric" as const,
+                xy: createAngleArc(p1, angleInfo1.startAngle, angleInfo1.endAngle, ANGLE_ARC_RADIUS),
+                tRange: [0, 1] as [number, number],
                 color: colors.point1,
-                size: 14,
+                weight: 2.5,
             },
+            // Angle arc 2
             {
-                type: "label" as const,
-                position: label2Pos as [number, number],
-                text: `${angle2}°`,
+                type: "parametric" as const,
+                xy: createAngleArc(p2, angleInfo2.startAngle, angleInfo2.endAngle, ANGLE_ARC_RADIUS),
+                tRange: [0, 1] as [number, number],
                 color: colors.point2,
-                size: 14,
+                weight: 2.5,
             },
+            // Angle arc 3
             {
-                type: "label" as const,
-                position: label3Pos as [number, number],
-                text: `${angle3}°`,
+                type: "parametric" as const,
+                xy: createAngleArc(p3, angleInfo3.startAngle, angleInfo3.endAngle, ANGLE_ARC_RADIUS),
+                tRange: [0, 1] as [number, number],
                 color: colors.point3,
-                size: 14,
+                weight: 2.5,
             },
         ];
-    }, [angles, colors, setVar, arcStart, arcEnd]);
+    }, [angles, colors, setVar, arcStart, arcEnd, ANGLE_ARC_RADIUS]);
+
+    // Convert math coordinates to percentage position for CSS overlay
+    const mathToPercent = (mathPos: [number, number]): { left: string; top: string } => {
+        const [xMin, xMax] = VIEW_BOX.x;
+        const [yMin, yMax] = VIEW_BOX.y;
+        const leftPercent = ((mathPos[0] - xMin) / (xMax - xMin)) * 100;
+        const topPercent = ((yMax - mathPos[1]) / (yMax - yMin)) * 100; // Y is inverted
+        return { left: `${leftPercent}%`, top: `${topPercent}%` };
+    };
 
     return (
         <div className="relative">
             <Cartesian2D
-                height={380}
-                viewBox={{ x: [-4.5, 4.5], y: [-4.5, 4.5] }}
+                height={HEIGHT}
+                viewBox={VIEW_BOX}
                 showGrid={false}
                 movablePoints={[
                     {
@@ -277,6 +343,30 @@ function MultipleInscribedAnglesVisualization() {
                 ]}
                 dynamicPlots={dynamicPlots}
             />
+            {/* Angle labels overlay */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ height: HEIGHT }}
+            >
+                <span
+                    className="absolute text-sm font-semibold -translate-x-1/2 -translate-y-1/2"
+                    style={{ ...mathToPercent(labelPositions[0]), color: colors.point1 }}
+                >
+                    {angles[0]}°
+                </span>
+                <span
+                    className="absolute text-sm font-semibold -translate-x-1/2 -translate-y-1/2"
+                    style={{ ...mathToPercent(labelPositions[1]), color: colors.point2 }}
+                >
+                    {angles[1]}°
+                </span>
+                <span
+                    className="absolute text-sm font-semibold -translate-x-1/2 -translate-y-1/2"
+                    style={{ ...mathToPercent(labelPositions[2]), color: colors.point3 }}
+                >
+                    {angles[2]}°
+                </span>
+            </div>
             <InteractionHintSequence
                 hintKey="inscribed-angles-drag"
                 steps={[
