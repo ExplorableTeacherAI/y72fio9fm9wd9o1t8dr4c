@@ -78,83 +78,290 @@ export interface VariableDefinition {
  */
 export const variableDefinitions: Record<string, VariableDefinition> = {
     // ========================================
-    // ADD YOUR VARIABLES HERE
+    // CIRCLE THEOREMS LESSON VARIABLES
     // ========================================
 
-    // Uncomment and modify these examples for your lesson:
-
-    /*
     // ─────────────────────────────────────────
-    // NUMBER - Use with sliders
+    // Section 1: Circle Essentials - Draw Your Own
     // ─────────────────────────────────────────
-    myValue: {
-        defaultValue: 5,
-        type: 'number',
-        label: 'My Value',
-        description: 'A number that controls something',
-        unit: 'm',           // optional unit display
-        min: 0,
-        max: 10,
-        step: 0.5,
-    },
-
-    // ─────────────────────────────────────────
-    // TEXT - Free text input
-    // ─────────────────────────────────────────
-    lessonTitle: {
-        defaultValue: 'My Lesson',
+    circleHighlight: {
+        defaultValue: '',
         type: 'text',
-        label: 'Lesson Title',
-        description: 'The title of your lesson',
-        placeholder: 'Enter a title...',
+        label: 'Circle Part Highlight',
+        description: 'Currently highlighted circle part',
+    },
+    essentialsStep: {
+        defaultValue: 0,
+        type: 'number',
+        label: 'Essentials Step',
+        description: 'Current step in the draw-your-own essentials section',
+        min: 0,
+        max: 4,
+        step: 1,
     },
 
     // ─────────────────────────────────────────
-    // SELECT - Dropdown with options
+    // Section 2: Inscribed Angles - Multiple angles
     // ─────────────────────────────────────────
-    difficulty: {
-        defaultValue: 'medium',
+    inscribedAngle1: {
+        defaultValue: 45,
+        type: 'number',
+        label: 'Inscribed Angle 1',
+        description: 'First inscribed angle in degrees',
+        unit: '°',
+        min: 10,
+        max: 170,
+        step: 1,
+        color: '#62D0AD',
+    },
+    inscribedAngle2: {
+        defaultValue: 45,
+        type: 'number',
+        label: 'Inscribed Angle 2',
+        description: 'Second inscribed angle in degrees',
+        unit: '°',
+        min: 10,
+        max: 170,
+        step: 1,
+        color: '#8E90F5',
+    },
+    inscribedAngle3: {
+        defaultValue: 45,
+        type: 'number',
+        label: 'Inscribed Angle 3',
+        description: 'Third inscribed angle in degrees',
+        unit: '°',
+        min: 10,
+        max: 170,
+        step: 1,
+        color: '#AC8BF9',
+    },
+
+    // ─────────────────────────────────────────
+    // Section 3: Angle at Centre Theorem
+    // ─────────────────────────────────────────
+    centreAngle: {
+        defaultValue: 90,
+        type: 'number',
+        label: 'Centre Angle',
+        description: 'Angle at the centre in degrees',
+        unit: '°',
+        min: 20,
+        max: 340,
+        step: 1,
+        color: '#F7B23B',
+    },
+    circumferenceAngle: {
+        defaultValue: 45,
+        type: 'number',
+        label: 'Circumference Angle',
+        description: 'Inscribed angle at circumference in degrees',
+        unit: '°',
+        min: 10,
+        max: 170,
+        step: 1,
+        color: '#62D0AD',
+    },
+
+    // ─────────────────────────────────────────
+    // Section 4: Angles in Same Segment
+    // ─────────────────────────────────────────
+    segmentAngle1: {
+        defaultValue: 50,
+        type: 'number',
+        label: 'Segment Angle 1',
+        description: 'First angle in same segment',
+        unit: '°',
+        min: 10,
+        max: 170,
+        step: 1,
+        color: '#62D0AD',
+    },
+    segmentAngle2: {
+        defaultValue: 50,
+        type: 'number',
+        label: 'Segment Angle 2',
+        description: 'Second angle in same segment',
+        unit: '°',
+        min: 10,
+        max: 170,
+        step: 1,
+        color: '#8E90F5',
+    },
+    segmentAngle3: {
+        defaultValue: 50,
+        type: 'number',
+        label: 'Segment Angle 3',
+        description: 'Third angle in same segment',
+        unit: '°',
+        min: 10,
+        max: 170,
+        step: 1,
+        color: '#AC8BF9',
+    },
+
+    // ─────────────────────────────────────────
+    // Section 5: Angle in Semicircle
+    // ─────────────────────────────────────────
+    semicircleAngle: {
+        defaultValue: 90,
+        type: 'number',
+        label: 'Semicircle Angle',
+        description: 'Angle inscribed in semicircle',
+        unit: '°',
+        min: 90,
+        max: 90,
+        step: 1,
+        color: '#62D0AD',
+    },
+    semicirclePointAngle: {
+        defaultValue: 60,
+        type: 'number',
+        label: 'Semicircle Point Position',
+        description: 'Position of point on semicircle in degrees',
+        unit: '°',
+        min: 10,
+        max: 170,
+        step: 1,
+    },
+
+    // ─────────────────────────────────────────
+    // Section 6: Practice Questions - Answers
+    // ─────────────────────────────────────────
+    answerCentreTheorem: {
+        defaultValue: '',
+        type: 'text',
+        label: 'Centre Theorem Answer',
+        description: 'Student answer for centre theorem question',
+        placeholder: '?',
+        correctAnswer: '35',
+        color: '#62D0AD',
+    },
+    answerSameSegment: {
+        defaultValue: '',
+        type: 'text',
+        label: 'Same Segment Answer',
+        description: 'Student answer for same segment question',
+        placeholder: '?',
+        correctAnswer: '52',
+        color: '#8E90F5',
+    },
+    answerSemicircle: {
+        defaultValue: '',
+        type: 'text',
+        label: 'Semicircle Answer',
+        description: 'Student answer for semicircle question',
+        placeholder: '?',
+        correctAnswer: '90',
+        color: '#AC8BF9',
+    },
+    answerIdentifyTheorem: {
+        defaultValue: '',
         type: 'select',
-        label: 'Difficulty',
-        description: 'The difficulty level of the lesson',
-        options: ['easy', 'medium', 'hard', 'expert'],
+        label: 'Identify Theorem Answer',
+        description: 'Student identifies which theorem to use',
+        placeholder: '???',
+        correctAnswer: 'Angle at centre',
+        options: ['Angle at centre', 'Same segment', 'Semicircle'],
+        color: '#F7B23B',
+    },
+    answerMixedProblem: {
+        defaultValue: '',
+        type: 'text',
+        label: 'Mixed Problem Answer',
+        description: 'Student answer for mixed problem',
+        placeholder: '?',
+        correctAnswer: '65',
+        color: '#F8A0CD',
     },
 
     // ─────────────────────────────────────────
-    // BOOLEAN - Toggle switch
+    // Section 1: Quick Check Questions
     // ─────────────────────────────────────────
-    showHints: {
-        defaultValue: true,
-        type: 'boolean',
-        label: 'Show Hints',
-        description: 'Toggle to show or hide hints',
+    answerRadiusDefinition: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Radius Definition Answer',
+        description: 'Student answer for radius definition',
+        placeholder: '???',
+        correctAnswer: 'centre to edge',
+        options: ['edge to edge', 'centre to edge', 'around the circle'],
+        color: '#62D0AD',
+    },
+    answerChordVsDiameter: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Chord vs Diameter Answer',
+        description: 'Student answer for chord vs diameter',
+        placeholder: '???',
+        correctAnswer: 'the diameter',
+        options: ['any chord', 'the diameter', 'the radius'],
+        color: '#8E90F5',
     },
 
     // ─────────────────────────────────────────
-    // ARRAY - List of numbers
+    // Section 2: Quick Check Questions
     // ─────────────────────────────────────────
-    dataPoints: {
-        defaultValue: [1, 4, 9, 16, 25],
-        type: 'array',
-        label: 'Data Points',
-        description: 'Y-values for plotting a graph',
+    answerInscribedDefinition: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Inscribed Angle Definition',
+        description: 'Student identifies where inscribed angle vertex is',
+        placeholder: '???',
+        correctAnswer: 'on the circumference',
+        options: ['at the centre', 'on the circumference', 'outside the circle'],
+        color: '#62D0AD',
     },
 
     // ─────────────────────────────────────────
-    // OBJECT - Complex structured data
+    // Section 3: Quick Check Questions
     // ─────────────────────────────────────────
-    graphSettings: {
-        defaultValue: { 
-            xMin: -10, 
-            xMax: 10, 
-            showGrid: true 
-        },
-        type: 'object',
-        label: 'Graph Settings',
-        description: 'Configuration for the graph display',
-        schema: '{ xMin: number, xMax: number, showGrid: boolean }',
+    answerCentreAngleRelation: {
+        defaultValue: '',
+        type: 'text',
+        label: 'Centre Angle Relation Answer',
+        description: 'Student answer for the relationship',
+        placeholder: '?',
+        correctAnswer: '2',
+        color: '#F7B23B',
     },
-    */
+    answerCentreAngleCalculation: {
+        defaultValue: '',
+        type: 'text',
+        label: 'Centre Angle Calculation',
+        description: 'Calculate inscribed angle from centre angle of 124°',
+        placeholder: '?',
+        correctAnswer: '62',
+        color: '#62D0AD',
+    },
+
+    // ─────────────────────────────────────────
+    // Section 4: Quick Check Questions
+    // ─────────────────────────────────────────
+    answerSameSegmentWhy: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Same Segment Why',
+        description: 'Why are angles in same segment equal',
+        placeholder: '???',
+        correctAnswer: 'same arc',
+        options: ['same chord', 'same arc', 'same radius'],
+        color: '#8E90F5',
+    },
+
+    // ─────────────────────────────────────────
+    // Section 5: Quick Check Questions
+    // ─────────────────────────────────────────
+    answerSemicircleWhy: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Semicircle Why',
+        description: 'Why is angle in semicircle 90°',
+        placeholder: '???',
+        correctAnswer: '180° ÷ 2 = 90°',
+        options: ['180° ÷ 2 = 90°', '360° ÷ 4 = 90°', '90° is special'],
+        color: '#AC8BF9',
+    },
 };
 
 /**
