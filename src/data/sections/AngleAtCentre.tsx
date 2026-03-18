@@ -545,7 +545,7 @@ export const angleAtCentreBlocks: ReactElement[] = [
                     arc
                 </InlineLinkedHighlight>
                 {" "}are equal (as you discovered in the{" "}
-                <InlineHyperlink id="link-previous-section" targetBlockId="segment-discovery" showHint={false}>
+                <InlineHyperlink id="link-previous-section" targetBlockId="segment-discovery" showHint={false} color="#8E90F5">
                     previous section
                 </InlineHyperlink>
                 ). Each{" "}
@@ -566,7 +566,7 @@ export const angleAtCentreBlocks: ReactElement[] = [
                 >
                     centre angle
                 </InlineLinkedHighlight>
-                {" "}— and since the{" "}
+                {" "}and since the{" "}
                 <InlineLinkedHighlight
                     varName="centreTheoremHighlight"
                     highlightId="centreAngle"
