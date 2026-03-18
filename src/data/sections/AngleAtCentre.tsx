@@ -324,27 +324,6 @@ function CentreVsInscribedVisualization() {
                     },
                 ]}
             />
-            {/* Ratio display overlay */}
-            <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-sm border border-slate-200">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.centre }}></span>
-                        <span className="text-xs text-slate-500">Centre angle:</span>
-                        <span className="text-lg font-bold" style={{ color: colors.centre }}>{centreAngle}°</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.inscribed }}></span>
-                        <span className="text-xs text-slate-500">Inscribed angle:</span>
-                        <span className="text-lg font-bold" style={{ color: colors.inscribed }}>{inscribedAngle}°</span>
-                    </div>
-                    <div className="border-t border-slate-200 pt-2 mt-2">
-                        <span className="text-xs text-slate-500">Ratio: </span>
-                        <span className="text-sm font-bold text-slate-700">
-                            {inscribedAngle > 0 ? (centreAngle / inscribedAngle).toFixed(1) : '—'}
-                        </span>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
