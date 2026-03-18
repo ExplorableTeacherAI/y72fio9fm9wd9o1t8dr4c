@@ -14,6 +14,7 @@ import {
     InlineClozeInput,
     InlineFeedback,
     InlineLinkedHighlight,
+    InlineSpotColor,
     Cartesian2D,
     InteractionHintSequence,
 } from "@/components/atoms";
@@ -457,7 +458,9 @@ export const angleAtCentreBlocks: ReactElement[] = [
                     >
                         centre angle
                     </InlineLinkedHighlight>
-                    {" "}is always exactly twice the{" "}
+                    {" "}is always exactly{" "}
+                    <InlineSpotColor id="spot-twice" color="#F7B23B">twice</InlineSpotColor>
+                    {" "}the{" "}
                     <InlineLinkedHighlight
                         varName="centreTheoremHighlight"
                         highlightId="inscribedAngle"
