@@ -5,7 +5,7 @@
  * Students drag points and see that all angles subtending the same arc are equal.
  */
 
-import { type ReactElement, useCallback, useState, useEffect } from "react";
+import { type ReactElement, useCallback, useState, useRef } from "react";
 import { Block } from "@/components/templates";
 import { StackLayout, SplitLayout } from "@/components/layouts";
 import {
@@ -107,10 +107,11 @@ function MultipleInscribedAnglesVisualization() {
         RADIUS * Math.sin(-Math.PI * 0.2)
     ];
 
-    // Track angles and label positions for display
-    const [angles, setAngles] = useState<[number, number, number]>([45, 45, 45]);
-    const [labelPositions, setLabelPositions] = useState<[[number, number], [number, number], [number, number]]>([
-        [0, 0], [0, 0], [0, 0]
+    // Track angles and label positions for display using refs to avoid render loops
+    const [renderTrigger, setRenderTrigger] = useState(0);
+    const anglesRef = useRef<[number, number, number]>([54, 54, 54]);
+    const labelPositionsRef = useRef<[[number, number], [number, number], [number, number]]>([
+        [-1.5, 1.5], [0, 2.2], [1.5, 1.2]
     ]);
 
     // Constrain points to the major arc (upper portion)
@@ -177,21 +178,19 @@ function MultipleInscribedAnglesVisualization() {
         const angleInfo2 = calculateInscribedAngleInfo(p2, arcStart, arcEnd);
         const angleInfo3 = calculateInscribedAngleInfo(p3, arcStart, arcEnd);
 
-        // Update state (will be used for display)
-        if (angleInfo1.degrees !== angles[0] || angleInfo2.degrees !== angles[1] || angleInfo3.degrees !== angles[2]) {
-            setAngles([angleInfo1.degrees, angleInfo2.degrees, angleInfo3.degrees]);
-            setVar('inscribedAngle1', angleInfo1.degrees);
-            setVar('inscribedAngle2', angleInfo2.degrees);
-            setVar('inscribedAngle3', angleInfo3.degrees);
-        }
-
         // Calculate label positions along bisector, further out from the arc
         const label1Pos = getLabelPosition(p1, angleInfo1.startAngle, angleInfo1.endAngle, ANGLE_ARC_RADIUS + 0.5);
         const label2Pos = getLabelPosition(p2, angleInfo2.startAngle, angleInfo2.endAngle, ANGLE_ARC_RADIUS + 0.5);
         const label3Pos = getLabelPosition(p3, angleInfo3.startAngle, angleInfo3.endAngle, ANGLE_ARC_RADIUS + 0.5);
 
-        // Update label positions for overlay rendering
-        setLabelPositions([label1Pos, label2Pos, label3Pos]);
+        // Update refs (no state update here to avoid render loops)
+        anglesRef.current = [angleInfo1.degrees, angleInfo2.degrees, angleInfo3.degrees];
+        labelPositionsRef.current = [label1Pos, label2Pos, label3Pos];
+
+        // Update global variables for other components
+        setVar('inscribedAngle1', angleInfo1.degrees);
+        setVar('inscribedAngle2', angleInfo2.degrees);
+        setVar('inscribedAngle3', angleInfo3.degrees);
 
         return [
             // Main circle
@@ -307,7 +306,12 @@ function MultipleInscribedAnglesVisualization() {
                 weight: 2.5,
             },
         ];
-    }, [angles, colors, setVar, arcStart, arcEnd, ANGLE_ARC_RADIUS]);
+    }, [colors, setVar, arcStart, arcEnd, ANGLE_ARC_RADIUS]);
+
+    // Handler to trigger re-render when points move
+    const handlePointChange = useCallback(() => {
+        setRenderTrigger(prev => prev + 1);
+    }, []);
 
     // Convert math coordinates to percentage position for CSS overlay
     const mathToPercent = (mathPos: [number, number]): { left: string; top: string } => {
@@ -329,16 +333,19 @@ function MultipleInscribedAnglesVisualization() {
                         initial: [RADIUS * Math.cos(Math.PI * 0.85), RADIUS * Math.sin(Math.PI * 0.85)],
                         color: colors.point1,
                         constrain: constrainToMajorArc,
+                        onChange: handlePointChange,
                     },
                     {
                         initial: [RADIUS * Math.cos(Math.PI * 0.55), RADIUS * Math.sin(Math.PI * 0.55)],
                         color: colors.point2,
                         constrain: constrainToMajorArc,
+                        onChange: handlePointChange,
                     },
                     {
                         initial: [RADIUS * Math.cos(Math.PI * 0.3), RADIUS * Math.sin(Math.PI * 0.3)],
                         color: colors.point3,
                         constrain: constrainToMajorArc,
+                        onChange: handlePointChange,
                     },
                 ]}
                 dynamicPlots={dynamicPlots}
@@ -349,22 +356,25 @@ function MultipleInscribedAnglesVisualization() {
                 style={{ height: HEIGHT }}
             >
                 <span
+                    key={`label-0-${renderTrigger}`}
                     className="absolute text-sm font-semibold -translate-x-1/2 -translate-y-1/2"
-                    style={{ ...mathToPercent(labelPositions[0]), color: colors.point1 }}
+                    style={{ ...mathToPercent(labelPositionsRef.current[0]), color: colors.point1 }}
                 >
-                    {angles[0]}°
+                    {anglesRef.current[0]}°
                 </span>
                 <span
+                    key={`label-1-${renderTrigger}`}
                     className="absolute text-sm font-semibold -translate-x-1/2 -translate-y-1/2"
-                    style={{ ...mathToPercent(labelPositions[1]), color: colors.point2 }}
+                    style={{ ...mathToPercent(labelPositionsRef.current[1]), color: colors.point2 }}
                 >
-                    {angles[1]}°
+                    {anglesRef.current[1]}°
                 </span>
                 <span
+                    key={`label-2-${renderTrigger}`}
                     className="absolute text-sm font-semibold -translate-x-1/2 -translate-y-1/2"
-                    style={{ ...mathToPercent(labelPositions[2]), color: colors.point3 }}
+                    style={{ ...mathToPercent(labelPositionsRef.current[2]), color: colors.point3 }}
                 >
-                    {angles[2]}°
+                    {anglesRef.current[2]}°
                 </span>
             </div>
             <InteractionHintSequence
