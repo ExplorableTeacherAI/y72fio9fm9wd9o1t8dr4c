@@ -13,6 +13,7 @@ import {
     EditableParagraph,
     InlineClozeInput,
     InlineFeedback,
+    InlineHyperlink,
     InlineLinkedHighlight,
     InlineSpotColor,
     Cartesian2D,
@@ -525,7 +526,74 @@ export const angleAtCentreBlocks: ReactElement[] = [
     <StackLayout key="layout-centre-explanation" maxWidth="xl">
         <Block id="centre-explanation" padding="sm">
             <EditableParagraph id="para-centre-explanation" blockId="centre-explanation">
-                This theorem explains why all inscribed angles on the same arc are equal (as you discovered in the previous section). Each inscribed angle is exactly half the centre angle — and since the centre angle stays fixed when you move the vertex along the arc, all the inscribed angles must be equal to each other.
+                This theorem explains why all{" "}
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="inscribedAngle"
+                    color="#62D0AD"
+                    bgColor="rgba(98, 208, 173, 0.15)"
+                >
+                    inscribed angles
+                </InlineLinkedHighlight>
+                {" "}on the same{" "}
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="arc"
+                    color="#F8A0CD"
+                    bgColor="rgba(248, 160, 205, 0.15)"
+                >
+                    arc
+                </InlineLinkedHighlight>
+                {" "}are equal (as you discovered in the{" "}
+                <InlineHyperlink id="link-previous-section" targetBlockId="segment-discovery" showHint={false}>
+                    previous section
+                </InlineHyperlink>
+                ). Each{" "}
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="inscribedAngle"
+                    color="#62D0AD"
+                    bgColor="rgba(98, 208, 173, 0.15)"
+                >
+                    inscribed angle
+                </InlineLinkedHighlight>
+                {" "}is exactly half the{" "}
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="centreAngle"
+                    color="#F7B23B"
+                    bgColor="rgba(247, 178, 59, 0.15)"
+                >
+                    centre angle
+                </InlineLinkedHighlight>
+                {" "}— and since the{" "}
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="centreAngle"
+                    color="#F7B23B"
+                    bgColor="rgba(247, 178, 59, 0.15)"
+                >
+                    centre angle
+                </InlineLinkedHighlight>
+                {" "}stays fixed when you move the vertex along the{" "}
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="arc"
+                    color="#F8A0CD"
+                    bgColor="rgba(248, 160, 205, 0.15)"
+                >
+                    arc
+                </InlineLinkedHighlight>
+                , all the{" "}
+                <InlineLinkedHighlight
+                    varName="centreTheoremHighlight"
+                    highlightId="inscribedAngle"
+                    color="#62D0AD"
+                    bgColor="rgba(98, 208, 173, 0.15)"
+                >
+                    inscribed angles
+                </InlineLinkedHighlight>
+                {" "}must be equal to each other.
             </EditableParagraph>
         </Block>
     </StackLayout>,
