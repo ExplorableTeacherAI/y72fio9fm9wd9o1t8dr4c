@@ -14,6 +14,7 @@ import {
     InlineTooltip,
     InlineClozeInput,
     InlineFeedback,
+    InlineSpotColor,
     Cartesian2D,
     InteractionHintSequence,
 } from "@/components/atoms";
@@ -346,7 +347,15 @@ export const angleAtCentreBlocks: ReactElement[] = [
     <StackLayout key="layout-centre-intro" maxWidth="xl">
         <Block id="centre-intro" padding="sm">
             <EditableParagraph id="para-centre-intro" blockId="centre-intro">
-                Now let's compare an inscribed angle with the angle formed at the centre of the circle when both "look at" the same arc. The diagram shows two angles: an amber angle at the centre and a teal inscribed angle on the circumference. Both angles are formed by drawing lines to the same two points (the indigo points that mark the arc endpoints).
+                Now let's compare an inscribed angle with the angle formed at the centre of the circle when both "look at" the same{" "}
+                <InlineSpotColor id="spot-arc-intro" color="#F8A0CD">arc</InlineSpotColor>
+                . The diagram shows two angles: an{" "}
+                <InlineSpotColor id="spot-centre-angle-intro" color="#F7B23B">amber angle at the centre</InlineSpotColor>
+                {" "}and a{" "}
+                <InlineSpotColor id="spot-inscribed-angle-intro" color="#62D0AD">teal inscribed angle</InlineSpotColor>
+                {" "}on the circumference. Both angles are formed by drawing lines to the same two{" "}
+                <InlineSpotColor id="spot-indigo-points-intro" color="#8E90F5">indigo points</InlineSpotColor>
+                {" "}that mark the arc endpoints.
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -356,12 +365,24 @@ export const angleAtCentreBlocks: ReactElement[] = [
         <div className="space-y-4">
             <Block id="centre-explore-prompt" padding="sm">
                 <EditableParagraph id="para-centre-explore-prompt" blockId="centre-explore-prompt">
-                    Drag the indigo arc endpoints to make the arc larger or smaller. Drag the teal point along the upper arc to move the inscribed angle vertex. Watch the angle measurements and the ratio displayed on the left side of the diagram.
+                    Drag the{" "}
+                    <InlineSpotColor id="spot-indigo-explore" color="#8E90F5">indigo arc endpoints</InlineSpotColor>
+                    {" "}to make the{" "}
+                    <InlineSpotColor id="spot-arc-explore" color="#F8A0CD">arc</InlineSpotColor>
+                    {" "}larger or smaller. Drag the{" "}
+                    <InlineSpotColor id="spot-teal-explore" color="#62D0AD">teal point</InlineSpotColor>
+                    {" "}along the upper arc to move the inscribed angle vertex. Watch the angle measurements displayed on the diagram.
                 </EditableParagraph>
             </Block>
             <Block id="centre-discovery" padding="sm">
                 <EditableParagraph id="para-centre-discovery" blockId="centre-discovery">
-                    Do you see the pattern? No matter how you arrange the points, the ratio stays remarkably constant. The centre angle is always exactly twice the inscribed angle. This is the first major circle theorem: the angle at the centre is double the angle at the circumference when both subtend the same arc.
+                    Do you see the pattern? No matter how you arrange the points, the ratio stays remarkably constant. The{" "}
+                    <InlineSpotColor id="spot-centre-discovery" color="#F7B23B">centre angle</InlineSpotColor>
+                    {" "}is always exactly twice the{" "}
+                    <InlineSpotColor id="spot-inscribed-discovery" color="#62D0AD">inscribed angle</InlineSpotColor>
+                    . This is the first major circle theorem: the angle at the centre is double the angle at the circumference when both subtend the same{" "}
+                    <InlineSpotColor id="spot-arc-discovery" color="#F8A0CD">arc</InlineSpotColor>
+                    .
                 </EditableParagraph>
             </Block>
             <Block id="centre-formula" padding="sm">
