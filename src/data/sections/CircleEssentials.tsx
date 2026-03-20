@@ -65,10 +65,15 @@ function DrawCirclePartsVisualization() {
         const radiusEnd = points[0] || [RADIUS * Math.cos(Math.PI * 0.35), RADIUS * Math.sin(Math.PI * 0.35)];
         const chordStart = points[1] || [RADIUS * Math.cos(-Math.PI * 0.7), RADIUS * Math.sin(-Math.PI * 0.7)];
         const chordEnd = points[2] || [RADIUS * Math.cos(-Math.PI * 0.3), RADIUS * Math.sin(-Math.PI * 0.3)];
+        const diameterPoint = points[3] || [RADIUS, 0];
 
-        // Fixed diameter endpoints (horizontal, independent of radius)
-        const diameterStart: [number, number] = [-RADIUS, 0];
-        const diameterEnd: [number, number] = [RADIUS, 0];
+        // Calculate the opposite diameter endpoint (always passes through centre)
+        const diameterAngle = Math.atan2(diameterPoint[1], diameterPoint[0]);
+        const diameterStart: [number, number] = [
+            RADIUS * Math.cos(diameterAngle + Math.PI),
+            RADIUS * Math.sin(diameterAngle + Math.PI)
+        ];
+        const diameterEnd: [number, number] = diameterPoint as [number, number];
 
         // Calculate arc angle for chord
         const chordStartAngle = Math.atan2(chordStart[1], chordStart[0]);
@@ -164,6 +169,11 @@ function DrawCirclePartsVisualization() {
                     {
                         initial: [RADIUS * Math.cos(-Math.PI * 0.3), RADIUS * Math.sin(-Math.PI * 0.3)],
                         color: colors.chord,
+                        constrain: constrainToCircle,
+                    },
+                    {
+                        initial: [RADIUS, 0],
+                        color: colors.diameter,
                         constrain: constrainToCircle,
                     },
                 ]}
