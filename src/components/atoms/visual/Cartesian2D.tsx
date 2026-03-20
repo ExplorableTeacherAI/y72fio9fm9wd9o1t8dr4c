@@ -251,7 +251,7 @@ function renderPlotItem(
         }
 
         case "point": {
-            const { opacity } = getHighlightStyle(item.highlightId, activeId);
+            const { opacity, isHighlighted } = getHighlightStyle(item.highlightId, activeId);
             return (
                 <Point
                     key={key}
@@ -259,6 +259,7 @@ function renderPlotItem(
                     y={item.y}
                     color={item.color}
                     opacity={opacity}
+                    svgCircleProps={isHighlighted ? { r: 8 } : undefined}
                 />
             );
         }
@@ -312,7 +313,7 @@ function renderPlotItem(
         }
 
         case "circle": {
-            const { opacity } = getHighlightStyle(item.highlightId, activeId);
+            const { opacity, isHighlighted } = getHighlightStyle(item.highlightId, activeId);
             return (
                 <Circle
                     key={key}
@@ -321,6 +322,7 @@ function renderPlotItem(
                     color={item.color}
                     fillOpacity={(item.fillOpacity ?? 0.15) * opacity}
                     strokeStyle={item.strokeStyle}
+                    weight={isHighlighted ? 4 : 2}
                 />
             );
         }
