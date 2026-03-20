@@ -63,7 +63,7 @@ function DrawCirclePartsVisualization() {
     // Dynamic plots based on movable points
     const dynamicPlots = useCallback((points: [number, number][]) => {
         const radiusEnd = points[0] || [RADIUS * Math.cos(Math.PI * 0.35), RADIUS * Math.sin(Math.PI * 0.35)];
-        const chordStart = points[1] || [RADIUS * Math.cos(Math.PI * 0.7), RADIUS * Math.sin(Math.PI * 0.7)];
+        const chordStart = points[1] || [RADIUS * Math.cos(-Math.PI * 0.7), RADIUS * Math.sin(-Math.PI * 0.7)];
         const chordEnd = points[2] || [RADIUS * Math.cos(-Math.PI * 0.3), RADIUS * Math.sin(-Math.PI * 0.3)];
 
         // Fixed diameter endpoints (horizontal, independent of radius)
@@ -157,7 +157,7 @@ function DrawCirclePartsVisualization() {
                         constrain: constrainToCircle,
                     },
                     {
-                        initial: [RADIUS * Math.cos(Math.PI * 0.7), RADIUS * Math.sin(Math.PI * 0.7)],
+                        initial: [RADIUS * Math.cos(-Math.PI * 0.7), RADIUS * Math.sin(-Math.PI * 0.7)],
                         color: colors.chord,
                         constrain: constrainToCircle,
                     },
