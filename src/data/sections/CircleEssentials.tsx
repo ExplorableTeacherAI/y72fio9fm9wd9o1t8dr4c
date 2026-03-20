@@ -291,39 +291,47 @@ export const circleEssentialsBlocks: ReactElement[] = [
                     is any straight line connecting two points on the circle. It doesn't have to pass through the centre. Drag the two violet points to reshape the chord.
                 </EditableParagraph>
             </Block>
-            <Block id="essentials-vocab-arc" padding="sm">
-                <EditableParagraph id="para-essentials-vocab-arc" blockId="essentials-vocab-arc">
-                    An{" "}
-                    <InlineLinkedHighlight
-                        varName="circleHighlight"
-                        highlightId="arc"
-                        color="#F8A0CD"
-                        bgColor="rgba(248, 160, 205, 0.15)"
-                    >
-                        arc
-                    </InlineLinkedHighlight>{" "}
-                    is a curved section of the circle's edge. The highlighted arc is the portion between the two chord endpoints.
-                </EditableParagraph>
-            </Block>
-            <Block id="essentials-vocab-circumference" padding="sm">
-                <EditableParagraph id="para-essentials-vocab-circumference" blockId="essentials-vocab-circumference">
-                    The{" "}
-                    <InlineLinkedHighlight
-                        varName="circleHighlight"
-                        highlightId="circumference"
-                        color="#62CCF9"
-                        bgColor="rgba(98, 204, 249, 0.15)"
-                    >
-                        circumference
-                    </InlineLinkedHighlight>{" "}
-                    is the complete outer boundary of the circle. It represents the total distance around it.
-                </EditableParagraph>
-            </Block>
         </div>
         <Block id="essentials-diagram-viz" padding="sm" hasVisualization>
             <DrawCirclePartsVisualization />
         </Block>
     </SplitLayout>,
+
+    // Arc definition - full width
+    <StackLayout key="layout-essentials-vocab-arc" maxWidth="xl">
+        <Block id="essentials-vocab-arc" padding="sm">
+            <EditableParagraph id="para-essentials-vocab-arc" blockId="essentials-vocab-arc">
+                An{" "}
+                <InlineLinkedHighlight
+                    varName="circleHighlight"
+                    highlightId="arc"
+                    color="#F8A0CD"
+                    bgColor="rgba(248, 160, 205, 0.15)"
+                >
+                    arc
+                </InlineLinkedHighlight>{" "}
+                is a curved section of the circle's edge. The highlighted arc is the portion between the two chord endpoints.
+            </EditableParagraph>
+        </Block>
+    </StackLayout>,
+
+    // Circumference definition - full width
+    <StackLayout key="layout-essentials-vocab-circumference" maxWidth="xl">
+        <Block id="essentials-vocab-circumference" padding="sm">
+            <EditableParagraph id="para-essentials-vocab-circumference" blockId="essentials-vocab-circumference">
+                The{" "}
+                <InlineLinkedHighlight
+                    varName="circleHighlight"
+                    highlightId="circumference"
+                    color="#62CCF9"
+                    bgColor="rgba(98, 204, 249, 0.15)"
+                >
+                    circumference
+                </InlineLinkedHighlight>{" "}
+                is the complete outer boundary of the circle. It represents the total distance around it.
+            </EditableParagraph>
+        </Block>
+    </StackLayout>,
 
     // Quick check heading
     <StackLayout key="layout-essentials-check-heading" maxWidth="xl">
