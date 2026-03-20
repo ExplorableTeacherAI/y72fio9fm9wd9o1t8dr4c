@@ -634,8 +634,8 @@ export const angleAtCentreBlocks: ReactElement[] = [
                     varName="answerCentreAngleCalculation"
                     correctValue="62"
                     position="terminal"
-                    successMessage="— perfect! 124° ÷ 2 = 62°"
-                    failureMessage="— not quite"
+                    successMessage="Perfect! 124° ÷ 2 = 62°"
+                    failureMessage="Not quite"
                     hint="The inscribed angle is half the centre angle"
                     visualizationHint={{
                         blockId: "centre-diagram-viz",

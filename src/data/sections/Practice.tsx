@@ -293,8 +293,8 @@ export const practiceBlocks: ReactElement[] = [
                     varName="answerCentreTheorem"
                     correctValue="35"
                     position="terminal"
-                    successMessage="— correct! The inscribed angle is half the centre angle: 70° ÷ 2 = 35°"
-                    failureMessage="— not quite"
+                    successMessage="Correct! The inscribed angle is half the centre angle: 70° ÷ 2 = 35°"
+                    failureMessage="Not quite"
                     hint="The inscribed angle is half the angle at the centre"
                     reviewBlockId="centre-discovery"
                     reviewLabel="Review the centre angle theorem"
@@ -329,8 +329,8 @@ export const practiceBlocks: ReactElement[] = [
                     varName="answerSameSegment"
                     correctValue="52"
                     position="terminal"
-                    successMessage="— exactly! Angles in the same segment are always equal"
-                    failureMessage="— not quite"
+                    successMessage="Exactly! Angles in the same segment are always equal"
+                    failureMessage="Not quite"
                     hint="Angles inscribed in the same segment are always..."
                     reviewBlockId="segment-discovery"
                     reviewLabel="Review the same segment theorem"
@@ -365,8 +365,8 @@ export const practiceBlocks: ReactElement[] = [
                     varName="answerSemicircle"
                     correctValue="90"
                     position="terminal"
-                    successMessage="— perfect! An angle inscribed in a semicircle is always 90°"
-                    failureMessage="— not quite"
+                    successMessage="Perfect! An angle inscribed in a semicircle is always 90°"
+                    failureMessage="Not quite"
                     hint="What is special about angles inscribed in a semicircle?"
                     reviewBlockId="semicircle-discovery"
                     reviewLabel="Review the semicircle theorem"
@@ -401,8 +401,8 @@ export const practiceBlocks: ReactElement[] = [
                     varName="answerIdentifyTheorem"
                     correctValue="Angle at centre"
                     position="terminal"
-                    successMessage="— correct! When you have both a centre angle and an inscribed angle on the same arc, use the angle at centre theorem"
-                    failureMessage="— not quite"
+                    successMessage="Correct! When you have both a centre angle and an inscribed angle on the same arc, use the angle at centre theorem"
+                    failureMessage="Not quite"
                     hint="Which theorem relates centre angles to inscribed angles?"
                 >
                     <InlineClozeChoice
@@ -436,8 +436,8 @@ export const practiceBlocks: ReactElement[] = [
                     varName="answerMixedProblem"
                     correctValue="65"
                     position="terminal"
-                    successMessage="— excellent! 180° - 90° - 25° = 65°. You combined the semicircle theorem with angle sum facts"
-                    failureMessage="— not quite"
+                    successMessage="Excellent! 180° - 90° - 25° = 65°. You combined the semicircle theorem with angle sum facts"
+                    failureMessage="Not quite"
                     hint="The three angles must sum to 180°. You know two of them: 90° and 25°"
                 >
                     <InlineClozeInput
@@ -454,7 +454,7 @@ export const practiceBlocks: ReactElement[] = [
     <StackLayout key="layout-practice-conclusion" maxWidth="xl">
         <Block id="practice-conclusion" padding="lg">
             <EditableParagraph id="para-practice-conclusion" blockId="practice-conclusion">
-                Well done! You've now learned the three core circle theorems: the angle at the centre is twice the inscribed angle, angles in the same segment are equal, and an angle in a semicircle is 90°. These theorems are all connected — they all emerge from the fundamental relationship between angles at the centre and angles on the circumference. Keep practicing, and you'll start to see these patterns everywhere in circle geometry.
+                Well done! You've now learned the three core circle theorems: the angle at the centre is twice the inscribed angle, angles in the same segment are equal, and an angle in a semicircle is 90°. These theorems are all connected. They all emerge from the fundamental relationship between angles at the centre and angles on the circumference. Keep practicing, and you'll start to see these patterns everywhere in circle geometry.
             </EditableParagraph>
         </Block>
     </StackLayout>,

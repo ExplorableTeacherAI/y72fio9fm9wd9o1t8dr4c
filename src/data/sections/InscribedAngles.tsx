@@ -433,7 +433,7 @@ export const inscribedAnglesBlocks: ReactElement[] = [
                 >
                     arc
                 </InlineTooltip>{" "}
-                — the curved portion of the circle between its two sides. In the diagram below, the pink arc is the arc that all three angles are looking at. The grey line connecting the arc's endpoints is called the chord.
+                . This is the curved portion of the circle between its two sides. In the diagram below, the pink arc is the arc that all three angles are looking at. The grey line connecting the arc's endpoints is called the chord.
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -448,7 +448,7 @@ export const inscribedAnglesBlocks: ReactElement[] = [
             </Block>
             <Block id="inscribed-discovery" padding="sm">
                 <EditableParagraph id="para-inscribed-discovery" blockId="inscribed-discovery">
-                    Notice something remarkable? No matter where you drag the points, all three angles stay equal to each other. Move them far apart, cluster them together — the angles remain the same. This is your first glimpse of a circle theorem: angles that "look at" the same arc are always equal.
+                    Notice something remarkable? No matter where you drag the points, all three angles stay equal to each other. Move them far apart, cluster them together. The angles remain the same. This is your first glimpse of a circle theorem: angles that "look at" the same arc are always equal.
                 </EditableParagraph>
             </Block>
             <Block id="inscribed-why-matters" padding="sm">
@@ -480,8 +480,8 @@ export const inscribedAnglesBlocks: ReactElement[] = [
                     varName="answerInscribedDefinition"
                     correctValue="on the circumference"
                     position="terminal"
-                    successMessage="— exactly right! The vertex sits on the circle's edge, not at the centre"
-                    failureMessage="— not quite"
+                    successMessage="Exactly right! The vertex sits on the circle's edge, not at the centre"
+                    failureMessage="Not quite"
                     hint="Look at where the coloured points are in the diagram"
                     reviewBlockId="inscribed-intro"
                     reviewLabel="Review the definition"

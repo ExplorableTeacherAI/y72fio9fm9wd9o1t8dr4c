@@ -209,7 +209,7 @@ export const circleEssentialsBlocks: ReactElement[] = [
     <StackLayout key="layout-essentials-intro" maxWidth="xl">
         <Block id="essentials-intro" padding="sm">
             <EditableParagraph id="para-essentials-intro" blockId="essentials-intro">
-                Here's something surprising: no matter where you place a point on a circle's edge and draw lines to both ends of a diameter, you'll always create a perfect right angle. Always. This isn't a coincidence — it's one of several beautiful patterns hidden in circles that mathematicians have known for over two thousand years. In this lesson, you'll discover these patterns yourself by dragging points around circles and watching the angles change — or rather, watching some angles stubbornly refuse to change.
+                Here's something surprising: no matter where you place a point on a circle's edge and draw lines to both ends of a diameter, you'll always create a perfect right angle. Always. This isn't a coincidence. It's one of several beautiful patterns hidden in circles that mathematicians have known for over two thousand years. In this lesson, you'll discover these patterns yourself by dragging points around circles and watching the angles change. Or rather, watching some angles stubbornly refuse to change.
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -227,7 +227,7 @@ export const circleEssentialsBlocks: ReactElement[] = [
     <StackLayout key="layout-essentials-vocab-intro" maxWidth="xl">
         <Block id="essentials-vocab-intro" padding="sm">
             <EditableParagraph id="para-essentials-vocab-intro" blockId="essentials-vocab-intro">
-                Before we can explore circle theorems, we need to know the names of the parts we'll be working with. The diagram on the right is interactive — drag the coloured points around and watch how the different parts move. Hover over any term below to see it highlighted on the diagram.
+                Before we can explore circle theorems, we need to know the names of the parts we'll be working with. The diagram on the right is interactive. Drag the coloured points around and watch how the different parts move. Hover over any term below to see it highlighted on the diagram.
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -246,7 +246,7 @@ export const circleEssentialsBlocks: ReactElement[] = [
                     >
                         centre
                     </InlineLinkedHighlight>{" "}
-                    is the fixed point at the heart of every circle — every point on the circle is exactly the same distance from it.
+                    is the fixed point at the heart of every circle. Every point on the circle is exactly the same distance from it.
                 </EditableParagraph>
             </Block>
             <Block id="essentials-vocab-radius" padding="sm">
@@ -288,7 +288,7 @@ export const circleEssentialsBlocks: ReactElement[] = [
                     >
                         chord
                     </InlineLinkedHighlight>{" "}
-                    is any straight line connecting two points on the circle — it doesn't have to pass through the centre. Drag the two violet points to reshape the chord.
+                    is any straight line connecting two points on the circle. It doesn't have to pass through the centre. Drag the two violet points to reshape the chord.
                 </EditableParagraph>
             </Block>
             <Block id="essentials-vocab-arc" padding="sm">
@@ -316,7 +316,7 @@ export const circleEssentialsBlocks: ReactElement[] = [
                     >
                         circumference
                     </InlineLinkedHighlight>{" "}
-                    is the complete outer boundary of the circle — the total distance around it.
+                    is the complete outer boundary of the circle. It represents the total distance around it.
                 </EditableParagraph>
             </Block>
         </div>
@@ -343,8 +343,8 @@ export const circleEssentialsBlocks: ReactElement[] = [
                     varName="answerRadiusDefinition"
                     correctValue="centre to edge"
                     position="terminal"
-                    successMessage="— that's right!"
-                    failureMessage="— not quite"
+                    successMessage="That's right!"
+                    failureMessage="Not quite"
                     hint="Let's explore the diagram!"
                     reviewBlockId="essentials-vocab-radius"
                     reviewLabel="Review the radius definition"
@@ -392,8 +392,8 @@ export const circleEssentialsBlocks: ReactElement[] = [
                     varName="answerChordVsDiameter"
                     correctValue="the diameter"
                     position="terminal"
-                    successMessage="— exactly! The diameter is the special chord that passes through the centre"
-                    failureMessage="— not quite"
+                    successMessage="Exactly! The diameter is the special chord that passes through the centre"
+                    failureMessage="Not quite"
                     hint="Let's explore!"
                     reviewBlockId="essentials-vocab-diameter"
                     reviewLabel="Review the diameter"
@@ -415,7 +415,7 @@ export const circleEssentialsBlocks: ReactElement[] = [
                             },
                             {
                                 gesture: "click",
-                                label: "When a chord goes through the centre, it's called a diameter — the longest possible chord!",
+                                label: "When a chord goes through the centre, it's called a diameter. That's the longest possible chord!",
                                 position: { x: "50%", y: "50%" },
                             },
                         ],

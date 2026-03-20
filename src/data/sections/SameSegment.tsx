@@ -300,7 +300,7 @@ export const sameSegmentBlocks: ReactElement[] = [
             </Block>
             <Block id="segment-discovery" padding="sm">
                 <EditableParagraph id="para-segment-discovery" blockId="segment-discovery">
-                    Every angle inscribed in the same segment — that is, every angle whose vertex lies on the same arc — is equal. It doesn't matter whether the points are close together or spread far apart along the arc. As long as they all "look at" the same chord from the same side, their angles are identical.
+                    Every angle inscribed in the same segment (that is, every angle whose vertex lies on the same arc) is equal. It doesn't matter whether the points are close together or spread far apart along the arc. As long as they all "look at" the same chord from the same side, their angles are identical.
                 </EditableParagraph>
             </Block>
             <Block id="segment-theorem" padding="sm">
@@ -337,8 +337,8 @@ export const sameSegmentBlocks: ReactElement[] = [
                     varName="answerSameSegmentWhy"
                     correctValue="same arc"
                     position="terminal"
-                    successMessage="— exactly! They all look at the same arc, so they're all half of the same centre angle"
-                    failureMessage="— not quite"
+                    successMessage="Exactly! They all look at the same arc, so they're all half of the same centre angle"
+                    failureMessage="Not quite"
                     hint="What do inscribed angles 'look at'?"
                     reviewBlockId="segment-connection"
                     reviewLabel="Review the connection"
