@@ -62,16 +62,13 @@ function DrawCirclePartsVisualization() {
 
     // Dynamic plots based on movable points
     const dynamicPlots = useCallback((points: [number, number][]) => {
-        const radiusEnd = points[0] || [RADIUS, 0];
+        const radiusEnd = points[0] || [RADIUS * Math.cos(Math.PI * 0.35), RADIUS * Math.sin(Math.PI * 0.35)];
         const chordStart = points[1] || [RADIUS * Math.cos(Math.PI * 0.7), RADIUS * Math.sin(Math.PI * 0.7)];
         const chordEnd = points[2] || [RADIUS * Math.cos(-Math.PI * 0.3), RADIUS * Math.sin(-Math.PI * 0.3)];
 
-        // Calculate diameter endpoint (opposite side of radius)
-        const radiusAngle = Math.atan2(radiusEnd[1], radiusEnd[0]);
-        const diameterEnd: [number, number] = [
-            RADIUS * Math.cos(radiusAngle + Math.PI),
-            RADIUS * Math.sin(radiusAngle + Math.PI)
-        ];
+        // Fixed diameter endpoints (horizontal, independent of radius)
+        const diameterStart: [number, number] = [-RADIUS, 0];
+        const diameterEnd: [number, number] = [RADIUS, 0];
 
         // Calculate arc angle for chord
         const chordStartAngle = Math.atan2(chordStart[1], chordStart[0]);
@@ -86,6 +83,15 @@ function DrawCirclePartsVisualization() {
                 color: colors.circumference,
                 fillOpacity: 0.05,
                 highlightId: 'circumference',
+            },
+            // Diameter line (fixed horizontal, independent of radius)
+            {
+                type: "segment" as const,
+                point1: diameterStart,
+                point2: diameterEnd,
+                color: colors.diameter,
+                weight: 3,
+                highlightId: 'diameter',
             },
             // Centre point
             {
@@ -103,16 +109,6 @@ function DrawCirclePartsVisualization() {
                 color: colors.radius,
                 weight: 3,
                 highlightId: 'radius',
-            },
-            // Diameter line (full)
-            {
-                type: "segment" as const,
-                point1: diameterEnd,
-                point2: radiusEnd,
-                color: colors.diameter,
-                weight: 2,
-                style: "dashed" as const,
-                highlightId: 'diameter',
             },
             // Chord line
             {
@@ -156,7 +152,7 @@ function DrawCirclePartsVisualization() {
                 highlightVarName="circleHighlight"
                 movablePoints={[
                     {
-                        initial: [RADIUS, 0],
+                        initial: [RADIUS * Math.cos(Math.PI * 0.35), RADIUS * Math.sin(Math.PI * 0.35)],
                         color: colors.radius,
                         constrain: constrainToCircle,
                     },
