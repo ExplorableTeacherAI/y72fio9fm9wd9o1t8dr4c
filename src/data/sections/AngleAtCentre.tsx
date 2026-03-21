@@ -15,6 +15,7 @@ import {
     InlineFeedback,
     InlineHyperlink,
     InlineLinkedHighlight,
+    InlineScrubbleNumber,
     InlineSpotColor,
     Cartesian2D,
     InteractionHintSequence,
@@ -23,8 +24,9 @@ import { FormulaBlock } from "@/components/molecules";
 import {
     getVariableInfo,
     clozePropsFromDefinition,
+    numberPropsFromDefinition,
 } from "../variables";
-import { useSetVar } from "@/stores";
+import { useSetVar, useVar } from "@/stores";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Calculate angle between two vectors
@@ -355,6 +357,43 @@ function CentreVsInscribedVisualization() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Reactive Paragraph: Centre Angle Scrubble
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CentreAngleScrubbleParagraph() {
+    const centreAngle = useVar('centreAngle', 90) as number;
+    const inscribedAngle = Math.round(centreAngle / 2);
+
+    return (
+        <EditableParagraph id="para-centre-scrubble" blockId="centre-scrubble">
+            When the{" "}
+            <InlineLinkedHighlight
+                varName="centreTheoremHighlight"
+                highlightId="centreAngle"
+                color="#F7B23B"
+                bgColor="rgba(247, 178, 59, 0.15)"
+            >
+                centre angle
+            </InlineLinkedHighlight>
+            {" "}is{" "}
+            <InlineScrubbleNumber
+                varName="centreAngle"
+                {...numberPropsFromDefinition(getVariableInfo('centreAngle'))}
+            />°, the{" "}
+            <InlineLinkedHighlight
+                varName="centreTheoremHighlight"
+                highlightId="inscribedAngle"
+                color="#62D0AD"
+                bgColor="rgba(98, 208, 173, 0.15)"
+            >
+                inscribed angle
+            </InlineLinkedHighlight>
+            {" "}is exactly <span style={{ color: '#62D0AD', fontWeight: 600 }}>{inscribedAngle}°</span> — always half. Try scrubbing the number to watch both angles update together in the diagram.
+        </EditableParagraph>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Section Blocks
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -521,6 +560,13 @@ export const angleAtCentreBlocks: ReactElement[] = [
             <CentreVsInscribedVisualization />
         </Block>
     </SplitLayout>,
+
+    // Interactive scrubble paragraph
+    <StackLayout key="layout-centre-scrubble" maxWidth="xl">
+        <Block id="centre-scrubble" padding="sm">
+            <CentreAngleScrubbleParagraph />
+        </Block>
+    </StackLayout>,
 
     // Explanation (full width)
     <StackLayout key="layout-centre-explanation" maxWidth="xl">
