@@ -5,7 +5,7 @@
  * Side-by-side comparison with live angle measurements.
  */
 
-import { type ReactElement, useCallback, useState, useRef } from "react";
+import { type ReactElement, useCallback, useState, useRef, useEffect } from "react";
 import { Block } from "@/components/templates";
 import { StackLayout, SplitLayout } from "@/components/layouts";
 import {
