@@ -21,7 +21,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <AppModeProvider>
         <EditingProvider>
-          <InlineInteractionHintProvider>
+          <InlineInteractionHintProvider alwaysShow>
             <HierarchyReporter />
             <ScrubbleNumberEditorModal />
             <ClozeInputEditorModal />
