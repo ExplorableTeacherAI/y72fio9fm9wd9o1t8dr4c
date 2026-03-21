@@ -107,20 +107,60 @@ function getLabelPosition(
 
 function CentreVsInscribedVisualization() {
     const setVar = useSetVar();
+    const storeCentreAngle = useVar('centreAngle', 90) as number;
+
     const RADIUS = 3;
     const CENTER: [number, number] = [0, 0];
     const ANGLE_ARC_RADIUS = 0.6;
     const VIEW_BOX = { x: [-4.5, 4.5] as [number, number], y: [-4.5, 4.5] as [number, number] };
     const HEIGHT = 400;
 
-    // Track angles for display
-    const [centreAngle, setCentreAngle] = useState(90);
-    const [inscribedAngle, setInscribedAngle] = useState(45);
+    // Track angles for display (local state for labels)
+    const [displayCentreAngle, setDisplayCentreAngle] = useState(90);
+    const [displayInscribedAngle, setDisplayInscribedAngle] = useState(45);
     const [renderTrigger, setRenderTrigger] = useState(0);
+
+    // Track if we're being controlled externally (from text scrubbing)
+    const lastStoreAngleRef = useRef(storeCentreAngle);
+    const isDraggingRef = useRef(false);
 
     // Refs for label positions
     const centreLabelPosRef = useRef<[number, number]>([0.8, 0.8]);
     const inscribedLabelPosRef = useRef<[number, number]>([0, 2.5]);
+
+    // Fixed first arc point position (in radians from positive x-axis)
+    const FIXED_ARC_START_ANGLE = Math.PI * 1.25;
+    const arcStartFixed: [number, number] = [
+        RADIUS * Math.cos(FIXED_ARC_START_ANGLE),
+        RADIUS * Math.sin(FIXED_ARC_START_ANGLE)
+    ];
+
+    // Calculate second arc point position based on store angle
+    // The centre angle is the angle between the two radii to the arc endpoints
+    const calculateArcEndFromAngle = useCallback((centreAngleDeg: number): [number, number] => {
+        const centreAngleRad = (centreAngleDeg * Math.PI) / 180;
+        // Move clockwise from the fixed start point
+        const endAngle = FIXED_ARC_START_ANGLE - centreAngleRad;
+        return [RADIUS * Math.cos(endAngle), RADIUS * Math.sin(endAngle)];
+    }, []);
+
+    // Position for the second arc point (controlled by store when scrubbing)
+    const [arcEndPosition, setArcEndPosition] = useState<[number, number]>(() =>
+        calculateArcEndFromAngle(90)
+    );
+
+    // Sync from store to visualization when text is scrubbed
+    useEffect(() => {
+        // Only update if the store value changed AND we're not currently dragging
+        if (storeCentreAngle !== lastStoreAngleRef.current && !isDraggingRef.current) {
+            const newPos = calculateArcEndFromAngle(storeCentreAngle);
+            setArcEndPosition(newPos);
+            setDisplayCentreAngle(storeCentreAngle);
+            setDisplayInscribedAngle(Math.round(storeCentreAngle / 2));
+            setRenderTrigger(prev => prev + 1);
+        }
+        lastStoreAngleRef.current = storeCentreAngle;
+    }, [storeCentreAngle, calculateArcEndFromAngle]);
 
     // Constrain to circle
     const constrainToCircle = useCallback((point: [number, number]): [number, number] => {
@@ -146,9 +186,12 @@ function CentreVsInscribedVisualization() {
         arc: '#F8A0CD',
     };
 
-    // Handler to trigger re-render when points move
+    // Handler when points are dragged
     const handlePointChange = useCallback(() => {
+        isDraggingRef.current = true;
         setRenderTrigger(prev => prev + 1);
+        // Reset dragging flag after a short delay
+        setTimeout(() => { isDraggingRef.current = false; }, 100);
     }, []);
 
     // Convert math coordinates to percentage position for CSS overlay
@@ -162,11 +205,11 @@ function CentreVsInscribedVisualization() {
 
     // Dynamic plots
     const dynamicPlots = useCallback((points: [number, number][]) => {
-        // Arc endpoints (movable)
-        const arcStart = points[0] || [RADIUS * Math.cos(Math.PI * 1.3), RADIUS * Math.sin(Math.PI * 1.3)];
-        const arcEnd = points[1] || [RADIUS * Math.cos(-Math.PI * 0.3), RADIUS * Math.sin(-Math.PI * 0.3)];
+        // Arc endpoints: first is fixed, second is from movable point
+        const arcStart = arcStartFixed;
+        const arcEnd = points[0] || arcEndPosition;
         // Inscribed angle vertex
-        const inscribedVertex = points[2] || [RADIUS * Math.cos(Math.PI * 0.5), RADIUS * Math.sin(Math.PI * 0.5)];
+        const inscribedVertex = points[1] || [RADIUS * Math.cos(Math.PI * 0.5), RADIUS * Math.sin(Math.PI * 0.5)];
 
         // Calculate angles with direction info
         const centreAngleInfo = calculateAngleInfo(CENTER, arcStart, arcEnd);
@@ -179,12 +222,15 @@ function CentreVsInscribedVisualization() {
         centreLabelPosRef.current = getLabelPosition(CENTER, centreAngleInfo.startAngle, centreAngleInfo.endAngle, ANGLE_ARC_RADIUS + 0.5);
         inscribedLabelPosRef.current = getLabelPosition(inscribedVertex, inscribedAngleInfo.startAngle, inscribedAngleInfo.endAngle, ANGLE_ARC_RADIUS + 0.5);
 
-        // Update display
-        if (cAngle !== centreAngle || iAngle !== inscribedAngle) {
-            setCentreAngle(cAngle);
-            setInscribedAngle(iAngle);
-            setVar('centreAngle', cAngle);
-            setVar('circumferenceAngle', iAngle);
+        // Update display and store when dragging
+        if (cAngle !== displayCentreAngle || iAngle !== displayInscribedAngle) {
+            setDisplayCentreAngle(cAngle);
+            setDisplayInscribedAngle(iAngle);
+            // Only update store if we're dragging (not when syncing from store)
+            if (isDraggingRef.current) {
+                setVar('centreAngle', cAngle);
+                setVar('circumferenceAngle', iAngle);
+            }
         }
 
         return [
@@ -288,7 +334,7 @@ function CentreVsInscribedVisualization() {
                 highlightId: 'arcEndpoints',
             },
         ];
-    }, [centreAngle, inscribedAngle, colors, setVar]);
+    }, [displayCentreAngle, displayInscribedAngle, colors, setVar, arcStartFixed, arcEndPosition]);
 
     return (
         <div className="relative">
@@ -299,22 +345,29 @@ function CentreVsInscribedVisualization() {
                 highlightVarName="centreTheoremHighlight"
                 movablePoints={[
                     {
-                        initial: [RADIUS * Math.cos(Math.PI * 1.25), RADIUS * Math.sin(Math.PI * 1.25)],
+                        // Second arc endpoint - controlled by store
+                        initial: arcEndPosition,
+                        position: arcEndPosition,
                         color: colors.arcPoints,
                         constrain: constrainToCircle,
                         onChange: handlePointChange,
                     },
                     {
-                        initial: [RADIUS * Math.cos(-Math.PI * 0.25), RADIUS * Math.sin(-Math.PI * 0.25)],
-                        color: colors.arcPoints,
-                        constrain: constrainToCircle,
-                        onChange: handlePointChange,
-                    },
-                    {
+                        // Inscribed angle vertex on upper arc
                         initial: [RADIUS * Math.cos(Math.PI * 0.5), RADIUS * Math.sin(Math.PI * 0.5)],
                         color: colors.inscribed,
                         constrain: constrainToUpperArc,
                         onChange: handlePointChange,
+                    },
+                ]}
+                plots={[
+                    // Static first arc endpoint (fixed position)
+                    {
+                        type: "point" as const,
+                        x: arcStartFixed[0],
+                        y: arcStartFixed[1],
+                        color: colors.arcPoints,
+                        highlightId: 'arcEndpoints',
                     },
                 ]}
                 dynamicPlots={dynamicPlots}
@@ -330,7 +383,7 @@ function CentreVsInscribedVisualization() {
                     className="absolute text-sm font-semibold -translate-x-1/2 -translate-y-1/2"
                     style={{ ...mathToPercent(centreLabelPosRef.current), color: colors.centre }}
                 >
-                    {centreAngle}°
+                    {displayCentreAngle}°
                 </span>
                 {/* Inscribed angle label */}
                 <span
@@ -338,7 +391,7 @@ function CentreVsInscribedVisualization() {
                     className="absolute text-sm font-semibold -translate-x-1/2 -translate-y-1/2"
                     style={{ ...mathToPercent(inscribedLabelPosRef.current), color: colors.inscribed }}
                 >
-                    {inscribedAngle}°
+                    {displayInscribedAngle}°
                 </span>
             </div>
             <InteractionHintSequence
@@ -346,9 +399,9 @@ function CentreVsInscribedVisualization() {
                 steps={[
                     {
                         gesture: "drag-circular",
-                        label: "Drag the indigo points to change the arc",
-                        position: { x: "25%", y: "70%" },
-                        dragPath: { type: "arc", startAngle: 225, endAngle: 270, radius: 30 },
+                        label: "Drag the indigo point to change the angle",
+                        position: { x: "75%", y: "70%" },
+                        dragPath: { type: "arc", startAngle: -45, endAngle: -90, radius: 30 },
                     },
                 ]}
             />
