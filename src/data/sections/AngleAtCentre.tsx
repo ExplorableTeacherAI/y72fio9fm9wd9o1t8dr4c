@@ -120,10 +120,6 @@ function CentreVsInscribedVisualization() {
     const [displayInscribedAngle, setDisplayInscribedAngle] = useState(45);
     const [renderTrigger, setRenderTrigger] = useState(0);
 
-    // Track if we're being controlled externally (from text scrubbing)
-    const lastStoreAngleRef = useRef(storeCentreAngle);
-    const isDraggingRef = useRef(false);
-
     // Refs for label positions
     const centreLabelPosRef = useRef<[number, number]>([0.8, 0.8]);
     const inscribedLabelPosRef = useRef<[number, number]>([0, 2.5]);
@@ -135,8 +131,7 @@ function CentreVsInscribedVisualization() {
         RADIUS * Math.sin(FIXED_ARC_START_ANGLE)
     ];
 
-    // Calculate second arc point position based on store angle
-    // The centre angle is the angle between the two radii to the arc endpoints
+    // Calculate second arc point position based on centre angle
     const calculateArcEndFromAngle = useCallback((centreAngleDeg: number): [number, number] => {
         const centreAngleRad = (centreAngleDeg * Math.PI) / 180;
         // Move clockwise from the fixed start point
@@ -144,23 +139,14 @@ function CentreVsInscribedVisualization() {
         return [RADIUS * Math.cos(endAngle), RADIUS * Math.sin(endAngle)];
     }, []);
 
-    // Position for the second arc point (controlled by store when scrubbing)
-    const [arcEndPosition, setArcEndPosition] = useState<[number, number]>(() =>
-        calculateArcEndFromAngle(90)
-    );
+    // Calculate the arc end position directly from the store value
+    const arcEndPosition = calculateArcEndFromAngle(storeCentreAngle);
 
-    // Sync from store to visualization when text is scrubbed
+    // Sync display values from store
     useEffect(() => {
-        // Only update if the store value changed AND we're not currently dragging
-        if (storeCentreAngle !== lastStoreAngleRef.current && !isDraggingRef.current) {
-            const newPos = calculateArcEndFromAngle(storeCentreAngle);
-            setArcEndPosition(newPos);
-            setDisplayCentreAngle(storeCentreAngle);
-            setDisplayInscribedAngle(Math.round(storeCentreAngle / 2));
-            setRenderTrigger(prev => prev + 1);
-        }
-        lastStoreAngleRef.current = storeCentreAngle;
-    }, [storeCentreAngle, calculateArcEndFromAngle]);
+        setDisplayCentreAngle(storeCentreAngle);
+        setDisplayInscribedAngle(Math.round(storeCentreAngle / 2));
+    }, [storeCentreAngle]);
 
     // Constrain to circle
     const constrainToCircle = useCallback((point: [number, number]): [number, number] => {
@@ -186,12 +172,29 @@ function CentreVsInscribedVisualization() {
         arc: '#F8A0CD',
     };
 
-    // Handler when points are dragged
-    const handlePointChange = useCallback(() => {
-        isDraggingRef.current = true;
+    // Handler when arc endpoint is dragged - calculate angle from point position and update store
+    const handleArcEndDrag = useCallback((point: [number, number]) => {
+        // Calculate the angle this point makes from the fixed start point
+        const pointAngle = Math.atan2(point[1], point[0]);
+        let angleDiff = FIXED_ARC_START_ANGLE - pointAngle;
+
+        // Normalize to 0-360 range
+        while (angleDiff < 0) angleDiff += 2 * Math.PI;
+        while (angleDiff > 2 * Math.PI) angleDiff -= 2 * Math.PI;
+
+        const centreAngleDeg = Math.round(angleDiff * (180 / Math.PI));
+
+        // Clamp to valid range
+        const clampedAngle = Math.max(20, Math.min(340, centreAngleDeg));
+
+        setVar('centreAngle', clampedAngle);
+        setVar('circumferenceAngle', Math.round(clampedAngle / 2));
         setRenderTrigger(prev => prev + 1);
-        // Reset dragging flag after a short delay
-        setTimeout(() => { isDraggingRef.current = false; }, 100);
+    }, [setVar]);
+
+    // Handler when inscribed vertex is dragged
+    const handleInscribedVertexDrag = useCallback(() => {
+        setRenderTrigger(prev => prev + 1);
     }, []);
 
     // Convert math coordinates to percentage position for CSS overlay
@@ -205,33 +208,19 @@ function CentreVsInscribedVisualization() {
 
     // Dynamic plots
     const dynamicPlots = useCallback((points: [number, number][]) => {
-        // Arc endpoints: first is fixed, second is from movable point
+        // Arc endpoints: first is fixed, second is from movable point (or calculated from store)
         const arcStart = arcStartFixed;
         const arcEnd = points[0] || arcEndPosition;
         // Inscribed angle vertex
         const inscribedVertex = points[1] || [RADIUS * Math.cos(Math.PI * 0.5), RADIUS * Math.sin(Math.PI * 0.5)];
 
-        // Calculate angles with direction info
+        // Calculate angles with direction info for label positioning
         const centreAngleInfo = calculateAngleInfo(CENTER, arcStart, arcEnd);
         const inscribedAngleInfo = calculateAngleInfo(inscribedVertex, arcStart, arcEnd);
-
-        const cAngle = centreAngleInfo.degrees;
-        const iAngle = inscribedAngleInfo.degrees;
 
         // Calculate label positions along bisector
         centreLabelPosRef.current = getLabelPosition(CENTER, centreAngleInfo.startAngle, centreAngleInfo.endAngle, ANGLE_ARC_RADIUS + 0.5);
         inscribedLabelPosRef.current = getLabelPosition(inscribedVertex, inscribedAngleInfo.startAngle, inscribedAngleInfo.endAngle, ANGLE_ARC_RADIUS + 0.5);
-
-        // Update display and store when dragging
-        if (cAngle !== displayCentreAngle || iAngle !== displayInscribedAngle) {
-            setDisplayCentreAngle(cAngle);
-            setDisplayInscribedAngle(iAngle);
-            // Only update store if we're dragging (not when syncing from store)
-            if (isDraggingRef.current) {
-                setVar('centreAngle', cAngle);
-                setVar('circumferenceAngle', iAngle);
-            }
-        }
 
         return [
             // Main circle
@@ -334,7 +323,7 @@ function CentreVsInscribedVisualization() {
                 highlightId: 'arcEndpoints',
             },
         ];
-    }, [displayCentreAngle, displayInscribedAngle, colors, setVar, arcStartFixed, arcEndPosition]);
+    }, [colors, arcStartFixed, arcEndPosition]);
 
     return (
         <div className="relative">
@@ -345,19 +334,19 @@ function CentreVsInscribedVisualization() {
                 highlightVarName="centreTheoremHighlight"
                 movablePoints={[
                     {
-                        // Second arc endpoint - controlled by store
+                        // Second arc endpoint - controlled by store, updates store on drag
                         initial: arcEndPosition,
                         position: arcEndPosition,
                         color: colors.arcPoints,
                         constrain: constrainToCircle,
-                        onChange: handlePointChange,
+                        onChange: handleArcEndDrag,
                     },
                     {
                         // Inscribed angle vertex on upper arc
                         initial: [RADIUS * Math.cos(Math.PI * 0.5), RADIUS * Math.sin(Math.PI * 0.5)],
                         color: colors.inscribed,
                         constrain: constrainToUpperArc,
-                        onChange: handlePointChange,
+                        onChange: handleInscribedVertexDrag,
                     },
                 ]}
                 plots={[
