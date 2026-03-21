@@ -593,20 +593,24 @@ export const angleAtCentreBlocks: ReactElement[] = [
                     .
                 </EditableParagraph>
             </Block>
-            <Block id="centre-formula" padding="sm">
-                <FormulaBlock
-                    latex="\clr{centreAngle}{\text{Centre angle}} = 2 \times \clr{inscribedAngle}{\text{Inscribed angle}}"
-                    colorMap={{
-                        centreAngle: "#F7B23B",
-                        inscribedAngle: "#62D0AD",
-                    }}
-                />
-            </Block>
         </div>
         <Block id="centre-diagram-viz" padding="sm" hasVisualization>
             <CentreVsInscribedVisualization />
         </Block>
     </SplitLayout>,
+
+    // Formula (full width)
+    <StackLayout key="layout-centre-formula" maxWidth="xl">
+        <Block id="centre-formula" padding="sm">
+            <FormulaBlock
+                latex="\clr{centreAngle}{\text{Centre angle}} = 2 \times \clr{inscribedAngle}{\text{Inscribed angle}}"
+                colorMap={{
+                    centreAngle: "#F7B23B",
+                    inscribedAngle: "#62D0AD",
+                }}
+            />
+        </Block>
+    </StackLayout>,
 
     // Interactive scrubble paragraph
     <StackLayout key="layout-centre-scrubble" maxWidth="xl">
