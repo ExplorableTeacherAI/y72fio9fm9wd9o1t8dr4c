@@ -88,7 +88,7 @@ export const EditableParagraph: React.FC<EditableParagraphProps> = ({
     className = '',
     size = 'base',
     leading = 'relaxed',
-    textAlign,
+    textAlign = 'justify',
 }) => (
     <EditableText
         as="p"
@@ -98,7 +98,7 @@ export const EditableParagraph: React.FC<EditableParagraphProps> = ({
             'text-muted-foreground',
             sizeStyles[size],
             leadingStyles[leading],
-            textAlign && textAlignStyles[textAlign],
+            textAlignStyles[textAlign],
             className
         )}
         enableSlashCommands

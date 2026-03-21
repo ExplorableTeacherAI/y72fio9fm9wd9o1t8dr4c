@@ -503,7 +503,7 @@ export const angleAtCentreBlocks: ReactElement[] = [
     <SplitLayout key="layout-centre-visualization" ratio="1:1" gap="lg">
         <div className="space-y-4">
             <Block id="centre-explore-prompt" padding="sm">
-                <EditableParagraph id="para-centre-explore-prompt" blockId="centre-explore-prompt" textAlign="justify">
+                <EditableParagraph id="para-centre-explore-prompt" blockId="centre-explore-prompt">
                     Drag the{" "}
                     <InlineLinkedHighlight
                         varName="centreTheoremHighlight"
