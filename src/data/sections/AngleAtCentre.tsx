@@ -295,16 +295,15 @@ function CentreVsInscribedVisualization() {
                 highlightId: 'inscribedAngle',
             },
             // Arc (between the two arc points - the arc NOT containing the inscribed vertex)
-            // This is the arc that both angles "subtend"
+            // This is the arc that both angles "subtend" - goes clockwise from start to end
             {
                 type: "parametric" as const,
                 xy: (t: number): [number, number] => {
                     const startAngle = Math.atan2(arcStart[1], arcStart[0]);
                     let endAngle = Math.atan2(arcEnd[1], arcEnd[0]);
-                    // We want to go counter-clockwise from start to end (the short way when end > start)
-                    // The arc should NOT contain the inscribed vertex (which is on top)
-                    // So we go counter-clockwise from start to end
-                    if (endAngle < startAngle) endAngle += 2 * Math.PI;
+                    // Go clockwise from start to end (the way that does NOT pass through the inscribed vertex on top)
+                    // Clockwise means decreasing angle, so we want endAngle < startAngle
+                    if (endAngle > startAngle) endAngle -= 2 * Math.PI;
                     const angle = startAngle + t * (endAngle - startAngle);
                     return [RADIUS * Math.cos(angle), RADIUS * Math.sin(angle)];
                 },
