@@ -11,6 +11,8 @@ interface EditableParagraphProps {
     size?: 'sm' | 'base' | 'lg' | 'xl';
     /** Leading/line-height variant */
     leading?: 'tight' | 'snug' | 'normal' | 'relaxed' | 'loose';
+    /** Text alignment */
+    textAlign?: 'left' | 'center' | 'right' | 'justify';
 }
 
 /**
@@ -32,6 +34,16 @@ const leadingStyles = {
     normal: 'leading-normal',
     relaxed: 'leading-relaxed',
     loose: 'leading-loose',
+};
+
+/**
+ * Text alignment styles
+ */
+const textAlignStyles = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right',
+    justify: 'text-justify',
 };
 
 /**
@@ -76,6 +88,7 @@ export const EditableParagraph: React.FC<EditableParagraphProps> = ({
     className = '',
     size = 'base',
     leading = 'relaxed',
+    textAlign,
 }) => (
     <EditableText
         as="p"
@@ -85,6 +98,7 @@ export const EditableParagraph: React.FC<EditableParagraphProps> = ({
             'text-muted-foreground',
             sizeStyles[size],
             leadingStyles[leading],
+            textAlign && textAlignStyles[textAlign],
             className
         )}
         enableSlashCommands
