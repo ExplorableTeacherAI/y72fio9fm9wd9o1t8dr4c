@@ -124,7 +124,8 @@ function CentreVsInscribedVisualization() {
     const centreLabelPosRef = useRef<[number, number]>([0.8, 0.8]);
     const inscribedLabelPosRef = useRef<[number, number]>([0, 2.5]);
 
-    // Fixed first arc point position (in radians from positive x-axis)
+    // Fixed first arc point position (lower-left, in radians from positive x-axis)
+    // Approximately at 225 degrees (π * 1.25)
     const FIXED_ARC_START_ANGLE = Math.PI * 1.25;
     const arcStartFixed: [number, number] = [
         RADIUS * Math.cos(FIXED_ARC_START_ANGLE),
@@ -132,10 +133,11 @@ function CentreVsInscribedVisualization() {
     ];
 
     // Calculate second arc point position based on centre angle
+    // The second point moves counter-clockwise from the first point
     const calculateArcEndFromAngle = useCallback((centreAngleDeg: number): [number, number] => {
         const centreAngleRad = (centreAngleDeg * Math.PI) / 180;
-        // Move clockwise from the fixed start point
-        const endAngle = FIXED_ARC_START_ANGLE - centreAngleRad;
+        // Move counter-clockwise from the fixed start point (add the angle)
+        const endAngle = FIXED_ARC_START_ANGLE + centreAngleRad;
         return [RADIUS * Math.cos(endAngle), RADIUS * Math.sin(endAngle)];
     }, []);
 
@@ -176,7 +178,8 @@ function CentreVsInscribedVisualization() {
     const handleArcEndDrag = useCallback((point: [number, number]) => {
         // Calculate the angle this point makes from the fixed start point
         const pointAngle = Math.atan2(point[1], point[0]);
-        let angleDiff = FIXED_ARC_START_ANGLE - pointAngle;
+        // Counter-clockwise angle difference from start to this point
+        let angleDiff = pointAngle - FIXED_ARC_START_ANGLE;
 
         // Normalize to 0-360 range
         while (angleDiff < 0) angleDiff += 2 * Math.PI;
@@ -291,14 +294,17 @@ function CentreVsInscribedVisualization() {
                 weight: 2.5,
                 highlightId: 'inscribedAngle',
             },
-            // Arc (between the two arc points, going through bottom)
+            // Arc (between the two arc points - the arc NOT containing the inscribed vertex)
+            // This is the arc that both angles "subtend"
             {
                 type: "parametric" as const,
                 xy: (t: number): [number, number] => {
                     const startAngle = Math.atan2(arcStart[1], arcStart[0]);
                     let endAngle = Math.atan2(arcEnd[1], arcEnd[0]);
-                    // Go the long way around (through bottom)
-                    if (endAngle > startAngle) endAngle -= 2 * Math.PI;
+                    // We want to go counter-clockwise from start to end (the short way when end > start)
+                    // The arc should NOT contain the inscribed vertex (which is on top)
+                    // So we go counter-clockwise from start to end
+                    if (endAngle < startAngle) endAngle += 2 * Math.PI;
                     const angle = startAngle + t * (endAngle - startAngle);
                     return [RADIUS * Math.cos(angle), RADIUS * Math.sin(angle)];
                 },
