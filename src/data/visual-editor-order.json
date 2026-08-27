@@ -39,7 +39,6 @@
     "segment-intro",
     "segment-explore-prompt",
     "segment-discovery",
-    "segment-theorem",
     "segment-diagram-viz",
     "block-1787813393517",
     "segment-connection",
@@ -417,8 +416,7 @@
       "columns": [
         [
           "segment-explore-prompt",
-          "segment-discovery",
-          "segment-theorem"
+          "segment-discovery"
         ],
         [
           "segment-diagram-viz"

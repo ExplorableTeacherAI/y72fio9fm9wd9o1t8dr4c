@@ -304,11 +304,6 @@ export const sameSegmentBlocks: ReactElement[] = [
                     Every angle inscribed in the same segment (that is, every angle whose vertex lies on the same arc) is equal. It doesn't matter whether the points are close together or spread far apart along the arc. As long as they all "look at" the same chord from the same side, their angles are identical.
                 </EditableParagraph>
             </Block>
-            <Block id="segment-theorem" padding="sm">
-                <FormulaBlock
-                    latex="\text{Angles in the same segment are equal}"
-                />
-            </Block>
             <Block id="segment-connection" padding="sm">
                 <EditableParagraph id="para-segment-connection" blockId="segment-connection">
                     This follows directly from the angle at centre theorem. Each inscribed angle is exactly half the centre angle subtending the same arc. Since they're all half of the same centre angle, they must all be equal to each other.
