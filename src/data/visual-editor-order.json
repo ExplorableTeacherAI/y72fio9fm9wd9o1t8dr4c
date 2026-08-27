@@ -40,8 +40,8 @@
     "segment-explore-prompt",
     "segment-discovery",
     "segment-theorem",
-    "segment-connection",
     "segment-diagram-viz",
+    "segment-connection",
     "segment-check-heading",
     "segment-question",
     "semicircle-heading",
@@ -417,8 +417,7 @@
         [
           "segment-explore-prompt",
           "segment-discovery",
-          "segment-theorem",
-          "segment-connection"
+          "segment-theorem"
         ],
         [
           "segment-diagram-viz"
@@ -436,6 +435,7 @@
       "type": "stack",
       "columns": [
         [
+          "segment-connection",
           "segment-check-heading"
         ]
       ],
