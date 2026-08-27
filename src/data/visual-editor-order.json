@@ -39,8 +39,8 @@
     "segment-intro",
     "segment-explore-prompt",
     "segment-discovery",
-    "segment-theorem",
     "segment-diagram-viz",
+    "segment-theorem",
     "segment-connection",
     "segment-check-heading",
     "segment-question",
@@ -416,8 +416,7 @@
       "columns": [
         [
           "segment-explore-prompt",
-          "segment-discovery",
-          "segment-theorem"
+          "segment-discovery"
         ],
         [
           "segment-diagram-viz"
@@ -435,6 +434,7 @@
       "type": "stack",
       "columns": [
         [
+          "segment-theorem",
           "segment-connection",
           "segment-check-heading"
         ]
