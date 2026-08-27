@@ -49,8 +49,8 @@
     "semicircle-explore-prompt",
     "semicircle-discovery",
     "semicircle-theorem",
-    "semicircle-why",
     "semicircle-diagram-viz",
+    "semicircle-why",
     "semicircle-check-heading",
     "semicircle-question",
     "practice-heading",
@@ -486,8 +486,7 @@
         [
           "semicircle-explore-prompt",
           "semicircle-discovery",
-          "semicircle-theorem",
-          "semicircle-why"
+          "semicircle-theorem"
         ],
         [
           "semicircle-diagram-viz"
@@ -505,6 +504,7 @@
       "type": "stack",
       "columns": [
         [
+          "semicircle-why",
           "semicircle-check-heading"
         ]
       ],
