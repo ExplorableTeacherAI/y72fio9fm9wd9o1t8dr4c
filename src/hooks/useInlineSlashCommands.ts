@@ -1,6 +1,22 @@
 import { useState, useRef, useCallback } from 'react';
 import type { SlashCommandType } from '@/components/templates/SlashCommandMenu';
-import { isInlineCommand } from '@/components/templates/SlashCommandMenu';
+import { isInlineCommand, type InlineCommandType } from '@/components/templates/SlashCommandMenu';
+import { createInlineMarkerId, decodeMarkerJson, encodeMarkerJson, encodeMarkerProps } from '@/lib/inlineMarkers';
+
+/**
+ * Dispatch a custom event requesting the editor modal to open for a newly
+ * inserted inline component. EditingContext listens for this and calls the
+ * appropriate `openXxxEditor` method with `isNew: true`.
+ */
+export const dispatchEditorOpenRequest = (
+    commandType: InlineCommandType,
+    uniqueId: string,
+    blockId: string,
+) => {
+    window.dispatchEvent(new CustomEvent('inline-editor-open-request', {
+        detail: { commandType, uniqueId, blockId },
+    }));
+};
 
 /**
  * Extract content from a contentEditable element, converting inline component
@@ -8,32 +24,30 @@ import { isInlineCommand } from '@/components/templates/SlashCommandMenu';
  * Shared between BlockInput and EditableText.
  */
 export const extractContentWithMarkers = (element: HTMLElement): string => {
-    let result = '';
-
-    const processNode = (node: Node) => {
+    const serializeNode = (node: Node): string => {
         if (node.nodeType === Node.TEXT_NODE) {
-            result += node.textContent || '';
+            return node.textContent || '';
         } else if (node.nodeType === Node.ELEMENT_NODE) {
             const el = node as HTMLElement;
             const componentType = el.getAttribute('data-inline-component');
             const componentId = el.getAttribute('data-component-id');
 
             if (componentType && componentId) {
-                // Check for saved props (present on real React-rendered components)
                 const propsAttr = el.getAttribute('data-component-props');
+                // Check for saved props (present on real React-rendered components)
                 if (propsAttr) {
                     // Props are stored as base64-encoded JSON on the element.
                     // Validate it's valid base64 by attempting a decode round-trip.
                     try {
-                        atob(propsAttr); // validate
-                        result += `{{${componentType}:${componentId}|${propsAttr}}}`;
+                        JSON.parse(decodeMarkerJson(propsAttr)); // validate
+                        return `{{${componentType}:${componentId}|${propsAttr}}}`;
                     } catch {
                         // Fallback: attribute might be raw JSON (legacy), try encoding it
                         try {
-                            const encoded = btoa(propsAttr);
-                            result += `{{${componentType}:${componentId}|${encoded}}}`;
+                            const encoded = encodeMarkerJson(propsAttr);
+                            return `{{${componentType}:${componentId}|${encoded}}}`;
                         } catch {
-                            result += `{{${componentType}:${componentId}}}`;
+                            return `{{${componentType}:${componentId}}}`;
                         }
                     }
                 } else {
@@ -42,23 +56,23 @@ export const extractContentWithMarkers = (element: HTMLElement): string => {
                     const domText = el.textContent?.trim();
                     if (domText) {
                         try {
-                            const minimalProps = btoa(JSON.stringify({ text: domText }));
-                            result += `{{${componentType}:${componentId}|${minimalProps}}}`;
+                            const minimalProps = encodeMarkerProps({ text: domText });
+                            return `{{${componentType}:${componentId}|${minimalProps}}}`;
                         } catch {
-                            result += `{{${componentType}:${componentId}}}`;
+                            return `{{${componentType}:${componentId}}}`;
                         }
                     } else {
-                        result += `{{${componentType}:${componentId}}}`;
+                        return `{{${componentType}:${componentId}}}`;
                     }
                 }
             } else {
-                node.childNodes.forEach(processNode);
+                return Array.from(node.childNodes).map(serializeNode).join('');
             }
         }
+        return '';
     };
 
-    element.childNodes.forEach(processNode);
-    return result.trim();
+    return Array.from(element.childNodes).map(serializeNode).join('').trim();
 };
 
 /**
@@ -74,48 +88,6 @@ export const hasInlineComponentSpans = (element: HTMLElement): boolean => {
  */
 export const getInlineComponentHTML = (commandType: SlashCommandType, uniqueId: string): string => {
     switch (commandType) {
-        case 'inlineScrubbleNumber':
-            return `<span
-                contenteditable="false"
-                data-inline-component="${commandType}"
-                data-component-id="${uniqueId}"
-                style="display: inline-flex; align-items: center; background: rgba(216, 27, 96, 0.9); color: white; border-radius: 4px; padding: 0 2px; font-weight: 500; margin: 0 2px; user-select: none; cursor: default;"
-            ><span style="padding: 0 2px;">◀</span><span style="min-width: 20px; text-align: center;">10</span><span style="padding: 0 2px;">▶</span></span>`;
-        case 'inlineClozeChoice':
-            return `<span
-                contenteditable="false"
-                data-inline-component="inlineClozeChoice"
-                data-component-id="${uniqueId}"
-                style="display: inline-flex; align-items: center; background: rgba(59, 130, 246, 0.35); color: #3B82F6; border-radius: 4px; padding: 0 6px; font-weight: 500; margin: 0 2px; user-select: none; cursor: pointer;"
-            >??? &#x25BE;</span>`;
-        case 'inlineClozeInput':
-            return `<span
-                contenteditable="false"
-                data-inline-component="${commandType}"
-                data-component-id="${uniqueId}"
-                style="display: inline-flex; align-items: center; background: rgba(59, 130, 246, 0.35); color: #3B82F6; border-radius: 4px; padding: 0 6px; font-weight: 500; margin: 0 2px; user-select: none; cursor: text;"
-            >???</span>`;
-        case 'inlineToggle':
-            return `<span
-                contenteditable="false"
-                data-inline-component="${commandType}"
-                data-component-id="${uniqueId}"
-                style="display: inline-flex; align-items: center; color: #D946EF; border-bottom: 2px dashed #D946EF; padding-bottom: 2px; font-weight: 500; margin: 0 2px; user-select: none; cursor: pointer;"
-            >option</span>`;
-        case 'inlineTooltip':
-            return `<span
-                contenteditable="false"
-                data-inline-component="${commandType}"
-                data-component-id="${uniqueId}"
-                style="color: #F59E0B; cursor: help; font-weight: 500; margin: 0 2px; user-select: none;"
-            >term</span>`;
-        case 'inlineTrigger':
-            return `<span
-                contenteditable="false"
-                data-inline-component="${commandType}"
-                data-component-id="${uniqueId}"
-                style="display: inline-flex; align-items: center; color: #10B981; font-weight: 500; margin: 0 2px; user-select: none; cursor: pointer;"
-            >trigger</span>`;
         case 'inlineHyperlink':
             return `<span
                 contenteditable="false"
@@ -123,27 +95,6 @@ export const getInlineComponentHTML = (commandType: SlashCommandType, uniqueId: 
                 data-component-id="${uniqueId}"
                 style="display: inline-flex; align-items: center; color: #10B981; border-bottom: 2px solid #10B981; padding-bottom: 2px; font-weight: 500; margin: 0 2px; user-select: none; cursor: pointer;"
             >link</span>`;
-        case 'inlineFormula':
-            return `<span
-                contenteditable="false"
-                data-inline-component="${commandType}"
-                data-component-id="${uniqueId}"
-                style="display: inline-flex; align-items: center; color: #8B5CF6; font-weight: 500; margin: 0 2px; user-select: none; cursor: default; font-style: italic;"
-            >f(x)</span>`;
-        case 'inlineSpotColor':
-            return `<span
-                contenteditable="false"
-                data-inline-component="${commandType}"
-                data-component-id="${uniqueId}"
-                style="display: inline-flex; align-items: center; background: #3B82F6; color: #ffffff; border-radius: 6px; padding: 1px 6px; font-weight: 600; margin: 0 2px; user-select: none; cursor: default; font-size: 0.92em; letter-spacing: 0.01em;"
-            >variable</span>`;
-        case 'inlineLinkedHighlight':
-            return `<span
-                contenteditable="false"
-                data-inline-component="${commandType}"
-                data-component-id="${uniqueId}"
-                style="display: inline-flex; align-items: center; color: #3b82f6; text-decoration: underline; text-decoration-style: dotted; text-decoration-color: #3b82f6; padding: 1px 4px; border-radius: 4px; font-weight: 500; margin: 0 2px; user-select: none; cursor: default;"
-            >highlight</span>`;
         default:
             return '';
     }
@@ -265,7 +216,7 @@ export const useInlineSlashCommands = ({
             // Only handle inline commands here
             if (!isInlineCommand(commandType)) return;
 
-            const uniqueId = `${commandType}-${Date.now()}`;
+            const uniqueId = createInlineMarkerId(commandType);
             const componentHTML = getInlineComponentHTML(commandType, uniqueId);
             const container = containerRef.current;
 
@@ -317,6 +268,15 @@ export const useInlineSlashCommands = ({
                 document.execCommand('insertHTML', false, componentHTML);
                 document.execCommand('insertText', false, ' ');
             }
+
+            // Resolve blockId from the container's closest data-block-id ancestor
+            const blockEl = container.closest('[data-block-id]');
+            const blockId = blockEl?.getAttribute('data-block-id') || '';
+
+            // Immediately open the editor modal for the newly inserted inline component
+            setTimeout(() => {
+                dispatchEditorOpenRequest(commandType as InlineCommandType, uniqueId, blockId);
+            }, 50);
 
             slashPositionRef.current = -1;
         },

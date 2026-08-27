@@ -11,8 +11,6 @@ interface EditableParagraphProps {
     size?: 'sm' | 'base' | 'lg' | 'xl';
     /** Leading/line-height variant */
     leading?: 'tight' | 'snug' | 'normal' | 'relaxed' | 'loose';
-    /** Text alignment */
-    textAlign?: 'left' | 'center' | 'right' | 'justify';
 }
 
 /**
@@ -37,24 +35,14 @@ const leadingStyles = {
 };
 
 /**
- * Text alignment styles
- */
-const textAlignStyles = {
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right',
-    justify: 'text-justify',
-};
-
-/**
  * EditableParagraph - Body text with inline component support
  * 
  * Use this for regular paragraph content that may contain inline
- * interactive components like InlineScrubbleNumber, equations, etc.
+ * inline components like InlineFormula, InlineHyperlink, etc.
  * 
  * Features:
  * - Supports inline editing in editor mode
- * - Can contain inline components (InlineScrubbleNumber, Equation, etc.)
+ * - Can contain inline components (InlineFormula, InlineHyperlink, etc.)
  * - Configurable text size and line-height
  * - Comfortable reading experience by default
  * 
@@ -69,7 +57,7 @@ const textAlignStyles = {
  * ```tsx
  * <EditableParagraph blockId="demo">
  *   If we set the value to{" "}
- *   <InlineScrubbleNumber varName="myValue" defaultValue={5} min={0} max={10} />
+ *   <InlineFormula latex="x^2" />
  *   {" "}we can see the effect in real-time.
  * </EditableParagraph>
  * ```
@@ -88,7 +76,6 @@ export const EditableParagraph: React.FC<EditableParagraphProps> = ({
     className = '',
     size = 'base',
     leading = 'relaxed',
-    textAlign = 'justify',
 }) => (
     <EditableText
         as="p"
@@ -98,7 +85,6 @@ export const EditableParagraph: React.FC<EditableParagraphProps> = ({
             'text-muted-foreground',
             sizeStyles[size],
             leadingStyles[leading],
-            textAlignStyles[textAlign],
             className
         )}
         enableSlashCommands

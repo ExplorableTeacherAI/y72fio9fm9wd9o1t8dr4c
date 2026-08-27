@@ -189,7 +189,7 @@ export const InlineClozeInput: React.FC<InlineClozeInputProps> = ({
             elementPath = `cloze-${blockId}-${varName ?? correctAnswer}`;
         }
 
-        openClozeInputEditor(
+        openClozeInputEditor?.(
             {
                 varName: effectiveVarName,
                 correctAnswer: effectiveCorrectAnswer,

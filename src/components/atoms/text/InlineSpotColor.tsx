@@ -161,7 +161,7 @@ export const InlineSpotColor: React.FC<InlineSpotColorProps> = ({
         // Use effectiveText, falling back to DOM textContent for robustness
         const text = effectiveText ?? domTextRef.current ?? containerRef.current?.textContent?.trim() ?? '';
 
-        openSpotColorEditor(
+        openSpotColorEditor?.(
             {
                 varName: effectiveVarName,
                 text,

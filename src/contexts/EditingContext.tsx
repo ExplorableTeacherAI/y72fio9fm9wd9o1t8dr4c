@@ -1,5 +1,8 @@
 import { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect, type ReactNode } from 'react';
 import { useAppMode } from './AppModeContext';
+import { extractContentWithMarkers } from '@/hooks/useInlineSlashCommands';
+import { encodeMarkerProps, updateProvisionalInlinePlaceholder } from '@/lib/inlineMarkers';
+import type { BlockLayoutManifest } from '@/lib/block-tree';
 
 // Edit types
 export interface TextEdit {
@@ -15,127 +18,35 @@ export interface TextEdit {
     timestamp: number;
 }
 
-export interface ScrubbleNumberEdit {
+/** Canonical save unit for text mixed with any number of inline components. */
+export interface BlockContentEdit {
     id: string;
-    type: 'scrubbleNumber';
+    type: 'blockContent';
     blockId: string;
-    elementPath: string;
-    originalProps: ScrubbleNumberProps;
-    newProps: ScrubbleNumberProps;
+    elementId?: string;
+    newContent: string;
+    /** Local editor metadata; stripped before the backend request. */
+    manualSaveOnly?: boolean;
     timestamp: number;
 }
 
-export interface ScrubbleNumberProps {
-    varName?: string;
-    defaultValue?: number;
-    min?: number;
-    max?: number;
-    step?: number;
-    color?: string;
+interface InlineComponentIdentity {
+    /** Stable marker identity, required to disambiguate repeated component types. */
+    componentId?: string;
+    /** New inline additions wait for the teacher's explicit Save action. */
+    manualSaveOnly?: boolean;
 }
 
-export interface ClozeInputEdit {
-    id: string;
-    type: 'clozeInput';
-    blockId: string;
-    elementPath: string;
-    originalProps: ClozeInputProps;
-    newProps: ClozeInputProps;
-    timestamp: number;
-}
-
-export interface ClozeInputProps {
-    varName?: string;
-    correctAnswer?: string;
-    placeholder?: string;
-    color?: string;
-    bgColor?: string;
-    caseSensitive?: boolean;
-}
-
-export interface ClozeChoiceEdit {
-    id: string;
-    type: 'clozeChoice';
-    blockId: string;
-    elementPath: string;
-    originalProps: ClozeChoiceProps;
-    newProps: ClozeChoiceProps;
-    timestamp: number;
-}
-
-export interface ClozeChoiceProps {
-    varName?: string;
-    correctAnswer?: string;
-    options?: string[];
-    placeholder?: string;
-    color?: string;
-    bgColor?: string;
-}
-
-export interface ToggleEdit {
-    id: string;
-    type: 'toggle';
-    blockId: string;
-    elementPath: string;
-    originalProps: ToggleProps;
-    newProps: ToggleProps;
-    timestamp: number;
-}
-
-export interface ToggleProps {
-    varName?: string;
-    options?: string[];
-    color?: string;
-    bgColor?: string;
-}
-
-export interface TooltipProps {
-    text?: string;       // The trigger text (children content)
-    tooltip?: string;    // The tooltip/definition content
-    color?: string;
-    bgColor?: string;
-    position?: string;   // 'top' | 'bottom' | 'auto'
-    maxWidth?: number;
-}
-
-export interface TooltipEdit {
-    id: string;
-    type: 'tooltip';
-    blockId: string;
-    elementPath: string;
-    originalProps: TooltipProps;
-    newProps: TooltipProps;
-    timestamp: number;
-}
-
-export interface TriggerComponentProps {
-    text?: string;
-    varName?: string;
-    value?: string | number | boolean;
-    color?: string;
-    bgColor?: string;
-    icon?: string;
-}
-
-export interface TriggerComponentEdit {
-    id: string;
-    type: 'trigger';
-    blockId: string;
-    elementPath: string;
-    originalProps: TriggerComponentProps;
-    newProps: TriggerComponentProps;
-    timestamp: number;
-}
-
-export interface HyperlinkComponentProps {
+export interface HyperlinkComponentProps extends InlineComponentIdentity {
     text?: string;
     href?: string;
     targetBlockId?: string;
     color?: string;
     bgColor?: string;
+    isNew?: boolean;
 }
 
-export interface HyperlinkComponentEdit {
+export interface HyperlinkComponentEdit extends InlineComponentIdentity {
     id: string;
     type: 'hyperlink';
     blockId: string;
@@ -145,158 +56,39 @@ export interface HyperlinkComponentEdit {
     timestamp: number;
 }
 
-export interface InlineFormulaProps {
-    latex?: string;
-    colorMap?: Record<string, string>;
-    color?: string;       // wrapper text color (default: #000000 black)
-}
-
-export interface InlineFormulaEdit {
-    id: string;
-    type: 'inlineFormula';
-    blockId: string;
-    elementPath: string;
-    originalProps: InlineFormulaProps;
-    newProps: InlineFormulaProps;
-    timestamp: number;
-}
-
-export interface SpotColorComponentProps {
-    varName?: string;
-    text?: string;
-    color?: string;
-}
-
-export interface SpotColorEdit {
-    id: string;
-    type: 'spotColor';
-    blockId: string;
-    elementPath: string;
-    originalProps: SpotColorComponentProps;
-    newProps: SpotColorComponentProps;
-    timestamp: number;
-}
-
-export interface LinkedHighlightComponentProps {
-    varName?: string;
-    highlightId?: string;
-    text?: string;
-    color?: string;
-    bgColor?: string;
-}
-
-export interface LinkedHighlightEdit {
-    id: string;
-    type: 'linkedHighlight';
-    blockId: string;
-    elementPath: string;
-    originalProps: LinkedHighlightComponentProps;
-    newProps: LinkedHighlightComponentProps;
-    timestamp: number;
-}
-
-export interface FormulaBlockComponentProps {
-    latex?: string;
-    colorMap?: Record<string, string>;
-    variables?: Record<string, { min: number; max: number; step: number; color: string }>;
-    clozeInputs?: Record<string, { correctAnswer: string; placeholder?: string; color?: string; bgColor?: string; caseSensitive?: boolean }>;
-    clozeChoices?: Record<string, { correctAnswer: string; options: string[]; placeholder?: string; color?: string; bgColor?: string }>;
-    linkedHighlights?: Record<string, { varName: string; color?: string; bgColor?: string }>;
-    color?: string;
-    isNew?: boolean;
-}
-
-export interface FormulaBlockEdit {
-    id: string;
-    type: 'formulaBlock';
-    blockId: string;
-    elementPath: string;
-    originalProps: FormulaBlockComponentProps;
-    newProps: FormulaBlockComponentProps;
-    timestamp: number;
-}
-
 export interface StructureEdit {
     id: string;
     type: 'structure';
     action: 'reorder' | 'delete' | 'add';
     blockId?: string;
     blockIds?: string[];
+    layout?: BlockLayoutManifest;
     content?: string;
     blockType?: string;
     afterBlockId?: string;
+    manualSaveOnly?: boolean;
     timestamp: number;
 }
 
-export type PendingEdit = TextEdit | ScrubbleNumberEdit | ClozeInputEdit | ClozeChoiceEdit | ToggleEdit | TooltipEdit | TriggerComponentEdit | HyperlinkComponentEdit | InlineFormulaEdit | SpotColorEdit | LinkedHighlightEdit | FormulaBlockEdit | StructureEdit;
+export type PendingEdit = BlockContentEdit | TextEdit | HyperlinkComponentEdit | StructureEdit;
 
 interface EditingContextType {
     // State
     isEditing: boolean;
     pendingEdits: PendingEdit[];
-    editingScrubbleNumber: (ScrubbleNumberProps & { blockId: string; elementPath: string }) | null;
-    editingClozeInput: (ClozeInputProps & { blockId: string; elementPath: string }) | null;
-    editingClozeChoice: (ClozeChoiceProps & { blockId: string; elementPath: string }) | null;
-    editingToggle: (ToggleProps & { blockId: string; elementPath: string }) | null;
-    editingTooltip: (TooltipProps & { blockId: string; elementPath: string }) | null;
-    editingTrigger: (TriggerComponentProps & { blockId: string; elementPath: string }) | null;
     editingHyperlink: (HyperlinkComponentProps & { blockId: string; elementPath: string }) | null;
-    editingInlineFormula: (InlineFormulaProps & { blockId: string; elementPath: string }) | null;
-    editingSpotColor: (SpotColorComponentProps & { blockId: string; elementPath: string }) | null;
-    editingLinkedHighlight: (LinkedHighlightComponentProps & { blockId: string; elementPath: string }) | null;
-    editingFormulaBlock: (FormulaBlockComponentProps & { blockId: string; elementPath: string }) | null;
 
     // Actions
     enableEditing: () => void;
     disableEditing: () => void;
     addTextEdit: (edit: Omit<TextEdit, 'id' | 'type' | 'timestamp'>) => void;
-    addScrubbleNumberEdit: (edit: Omit<ScrubbleNumberEdit, 'id' | 'type' | 'timestamp'>) => void;
-    addClozeInputEdit: (edit: Omit<ClozeInputEdit, 'id' | 'type' | 'timestamp'>) => void;
-    addClozeChoiceEdit: (edit: Omit<ClozeChoiceEdit, 'id' | 'type' | 'timestamp'>) => void;
-    addToggleEdit: (edit: Omit<ToggleEdit, 'id' | 'type' | 'timestamp'>) => void;
-    addTooltipEdit: (edit: Omit<TooltipEdit, 'id' | 'type' | 'timestamp'>) => void;
-    addTriggerEdit: (edit: Omit<TriggerComponentEdit, 'id' | 'type' | 'timestamp'>) => void;
     addStructureEdit: (edit: Omit<StructureEdit, 'id' | 'type' | 'timestamp'>) => void;
     removeEdit: (id: string) => void;
     clearAllEdits: () => void;
-    openScrubbleNumberEditor: (props: ScrubbleNumberProps, blockId: string, elementPath: string) => void;
-    closeScrubbleNumberEditor: () => void;
-    saveScrubbleNumberEdit: (newProps: ScrubbleNumberProps) => void;
-    openClozeInputEditor: (props: ClozeInputProps, blockId: string, elementPath: string) => void;
-    closeClozeInputEditor: () => void;
-    saveClozeInputEdit: (newProps: ClozeInputProps) => void;
-    openClozeChoiceEditor: (props: ClozeChoiceProps, blockId: string, elementPath: string) => void;
-    closeClozeChoiceEditor: () => void;
-    saveClozeChoiceEdit: (newProps: ClozeChoiceProps) => void;
-    openToggleEditor: (props: ToggleProps, blockId: string, elementPath: string) => void;
-    closeToggleEditor: () => void;
-    saveToggleEdit: (newProps: ToggleProps) => void;
-    openTooltipEditor: (props: TooltipProps, blockId: string, elementPath: string) => void;
-    closeTooltipEditor: () => void;
-    saveTooltipEdit: (newProps: TooltipProps) => void;
-    openTriggerEditor: (props: TriggerComponentProps, blockId: string, elementPath: string) => void;
-    closeTriggerEditor: () => void;
-    saveTriggerEdit: (newProps: TriggerComponentProps) => void;
     addHyperlinkEdit: (edit: Omit<HyperlinkComponentEdit, 'id' | 'type' | 'timestamp'>) => void;
     openHyperlinkEditor: (props: HyperlinkComponentProps, blockId: string, elementPath: string) => void;
     closeHyperlinkEditor: () => void;
     saveHyperlinkEdit: (newProps: HyperlinkComponentProps) => void;
-    addInlineFormulaEdit: (edit: Omit<InlineFormulaEdit, 'id' | 'type' | 'timestamp'>) => void;
-    openInlineFormulaEditor: (props: InlineFormulaProps, blockId: string, elementPath: string) => void;
-    closeInlineFormulaEditor: () => void;
-    saveInlineFormulaEdit: (newProps: InlineFormulaProps) => void;
-    addSpotColorEdit: (edit: Omit<SpotColorEdit, 'id' | 'type' | 'timestamp'>) => void;
-    openSpotColorEditor: (props: SpotColorComponentProps, blockId: string, elementPath: string) => void;
-    closeSpotColorEditor: () => void;
-    saveSpotColorEdit: (newProps: SpotColorComponentProps) => void;
-    addLinkedHighlightEdit: (edit: Omit<LinkedHighlightEdit, 'id' | 'type' | 'timestamp'>) => void;
-    openLinkedHighlightEditor: (props: LinkedHighlightComponentProps, blockId: string, elementPath: string) => void;
-    closeLinkedHighlightEditor: () => void;
-    saveLinkedHighlightEdit: (newProps: LinkedHighlightComponentProps) => void;
-    addFormulaBlockEdit: (edit: Omit<FormulaBlockEdit, 'id' | 'type' | 'timestamp'>) => void;
-    openFormulaBlockEditor: (props: FormulaBlockComponentProps, blockId: string, elementPath: string) => void;
-    closeFormulaBlockEditor: () => void;
-    saveFormulaBlockEdit: (newProps: FormulaBlockComponentProps) => void;
 }
 
 const EditingContext = createContext<EditingContextType | undefined>(undefined);
@@ -305,62 +97,48 @@ interface EditingProviderProps {
     children: ReactNode;
 }
 
+const isSameInlineTarget = (
+    candidate: { blockId: string; elementPath: string; componentId?: string },
+    edit: { blockId: string; elementPath: string; componentId?: string },
+) => candidate.blockId === edit.blockId && (
+    edit.componentId
+        ? candidate.componentId === edit.componentId
+        : candidate.elementPath === edit.elementPath
+);
+
 export const EditingProvider = ({ children }: EditingProviderProps) => {
     const { isEditor } = useAppMode();
 
-    const [isEditing, setIsEditing] = useState(false);
+    // Editor pages are always editable. Preview mode still starts (and stays)
+    // non-editable, so student interactions are never intercepted.
+    const [isEditing, setIsEditing] = useState(isEditor);
     const [pendingEdits, setPendingEdits] = useState<PendingEdit[]>([]);
-    const [editingScrubbleNumber, setEditingScrubbleNumber] = useState<(ScrubbleNumberProps & {
-        blockId: string;
-        elementPath: string;
-    }) | null>(null);
-    const [editingClozeInput, setEditingClozeInput] = useState<(ClozeInputProps & {
-        blockId: string;
-        elementPath: string;
-    }) | null>(null);
-    const [editingClozeChoice, setEditingClozeChoice] = useState<(ClozeChoiceProps & {
-        blockId: string;
-        elementPath: string;
-    }) | null>(null);
-    const [editingToggle, setEditingToggle] = useState<(ToggleProps & {
-        blockId: string;
-        elementPath: string;
-    }) | null>(null);
-    const [editingTooltip, setEditingTooltip] = useState<(TooltipProps & {
-        blockId: string;
-        elementPath: string;
-    }) | null>(null);
-    const [editingTrigger, setEditingTrigger] = useState<(TriggerComponentProps & {
-        blockId: string;
-        elementPath: string;
-    }) | null>(null);
     const [editingHyperlink, setEditingHyperlink] = useState<(HyperlinkComponentProps & {
         blockId: string;
         elementPath: string;
     }) | null>(null);
-    const [editingInlineFormula, setEditingInlineFormula] = useState<(InlineFormulaProps & {
-        blockId: string;
-        elementPath: string;
-    }) | null>(null);
-    const [editingSpotColor, setEditingSpotColor] = useState<(SpotColorComponentProps & {
-        blockId: string;
-        elementPath: string;
-    }) | null>(null);
-    const [editingLinkedHighlight, setEditingLinkedHighlight] = useState<(LinkedHighlightComponentProps & {
-        blockId: string;
-        elementPath: string;
-    }) | null>(null);
-    const [editingFormulaBlock, setEditingFormulaBlock] = useState<(FormulaBlockComponentProps & {
-        blockId: string;
-        elementPath: string;
-    }) | null>(null);
-
     // Keep a ref of pending edits for event listeners to avoid stale closures
     const pendingEditsRef = useRef(pendingEdits);
+    const pendingRevisionRef = useRef(0);
+    const openComponentEditorRef = useRef(false);
 
     useEffect(() => {
         pendingEditsRef.current = pendingEdits;
+        pendingRevisionRef.current += 1;
     }, [pendingEdits]);
+
+    useEffect(() => {
+        const open = Boolean(
+            editingHyperlink
+        );
+        openComponentEditorRef.current = open;
+        // The parent owns auto-save. Tell it that inline configuration is a
+        // transaction in progress so it does not snapshot the provisional
+        // marker before the teacher validates and applies the panel.
+        window.parent.postMessage({ type: 'component-editor-state', open }, '*');
+    }, [
+        editingHyperlink,
+    ]);
 
     // Generate unique ID for edits
     const generateId = useCallback(() => {
@@ -452,6 +230,42 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
 
     const addStructureEdit = useCallback((edit: Omit<StructureEdit, 'id' | 'type' | 'timestamp'>) => {
         setPendingEdits(prev => {
+            // Only the latest complete order matters. Keeping every drag event
+            // replays obsolete intermediate positions around adds/deletes.
+            if (edit.action === 'reorder') {
+                const withoutOlderReorders = prev.filter(
+                    candidate => candidate.type !== 'structure' || candidate.action !== 'reorder'
+                );
+                return [
+                    ...withoutOlderReorders,
+                    {
+                        ...edit,
+                        id: generateId(),
+                        type: 'structure' as const,
+                        timestamp: Date.now(),
+                    },
+                ];
+            }
+
+            // Repeated deletes are idempotent. Retain the newest complete
+            // order snapshot rather than sending duplicate operations.
+            if (edit.action === 'delete') {
+                const existingDeleteIndex = prev.findIndex(
+                    candidate => candidate.type === 'structure' &&
+                        candidate.action === 'delete' &&
+                        candidate.blockId === edit.blockId
+                );
+                if (existingDeleteIndex !== -1) {
+                    const updated = [...prev];
+                    updated[existingDeleteIndex] = {
+                        ...updated[existingDeleteIndex],
+                        ...edit,
+                        timestamp: Date.now(),
+                    } as StructureEdit;
+                    return updated;
+                }
+            }
+
             // Check if there's already an 'add' structure edit for this blockId
             // This handles the case where we add a placeholder and then commit content to it
             if (edit.action === 'add') {
@@ -475,6 +289,8 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
                         blockType: (existing.blockType !== 'placeholder' && edit.blockType === 'modify-content')
                             ? existing.blockType
                             : edit.blockType,
+                        manualSaveOnly: existing.manualSaveOnly ||
+                            edit.manualSaveOnly || edit.blockType === 'modify-content',
                         timestamp: Date.now(),
                     };
                     return updated;
@@ -483,6 +299,7 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
 
             const newEdit: StructureEdit = {
                 ...edit,
+                manualSaveOnly: edit.manualSaveOnly || edit.blockType === 'modify-content',
                 id: generateId(),
                 type: 'structure',
                 timestamp: Date.now(),
@@ -496,437 +313,53 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
     }, []);
 
     const clearAllEdits = useCallback(() => {
+        pendingEditsRef.current = [];
+        pendingRevisionRef.current += 1;
         setPendingEdits([]);
     }, []);
 
-    // Scrubble Number editing methods
-    const addScrubbleNumberEdit = useCallback((edit: Omit<ScrubbleNumberEdit, 'id' | 'type' | 'timestamp'>) => {
-        const newEdit: ScrubbleNumberEdit = {
-            ...edit,
-            id: generateId(),
-            type: 'scrubbleNumber',
-            timestamp: Date.now(),
-        };
+    const cancelProvisionalInlineComponent = useCallback((
+        editor: (InlineComponentIdentity & { blockId: string; isNew?: boolean }) | null,
+        markerType: string,
+    ) => {
+        if (!editor?.isNew || !editor.componentId) return;
 
-        setPendingEdits(prev => {
-            // Check if there's already an edit for the same scrubble number
-            const existingIndex = prev.findIndex(
-                e => e.type === 'scrubbleNumber' &&
-                    (e as ScrubbleNumberEdit).blockId === edit.blockId &&
-                    (e as ScrubbleNumberEdit).elementPath === edit.elementPath
-            );
+        const { blockId, componentId } = editor;
+        const escapedId = componentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const markerRe = new RegExp(
+            `\\{\\{${markerType}:${escapedId}(?:\\|[A-Za-z0-9+/=]*)?\\}\\}\\s?`,
+            'g',
+        );
 
-            if (existingIndex !== -1) {
-                // Update existing edit
-                const updated = [...prev];
-                const existing = updated[existingIndex] as ScrubbleNumberEdit;
-
-                // If props match original, remove the edit
-                const propsMatch = JSON.stringify(edit.newProps) === JSON.stringify(existing.originalProps);
-                if (propsMatch) {
-                    updated.splice(existingIndex, 1);
-                    return updated;
-                }
-
-                // Otherwise update
-                updated[existingIndex] = {
-                    ...existing,
-                    newProps: edit.newProps,
+        // The paragraph may already have been promoted from a DOM placeholder
+        // to a structure edit when focus moved into the panel. Remove the
+        // provisional marker before closing the panel so auto-save cannot add
+        // a component that the teacher cancelled.
+        setPendingEdits(prev => prev.map(edit => {
+            if (
+                edit.type !== 'structure' || edit.action !== 'add' ||
+                edit.blockId !== blockId || !edit.content
+            ) return edit;
+            const content = edit.content.replace(markerRe, '');
+            const stillContainsInlineComponent = /\{\{inline[A-Za-z]+:[^}]+\}\}/.test(content);
+            return content === edit.content
+                ? edit
+                : {
+                    ...edit,
+                    content,
+                    manualSaveOnly: stillContainsInlineComponent || undefined,
                     timestamp: Date.now(),
                 };
-                return updated;
-            }
+        }));
 
-            return [...prev, newEdit];
-        });
-    }, [generateId]);
-
-    const openScrubbleNumberEditor = useCallback((
-        props: ScrubbleNumberProps,
-        blockId: string,
-        elementPath: string
-    ) => {
-        setEditingScrubbleNumber({ ...props, blockId, elementPath });
+        window.dispatchEvent(new CustomEvent('inline-component-cancelled', {
+            detail: { blockId, componentId },
+        }));
     }, []);
-
-    const closeScrubbleNumberEditor = useCallback(() => {
-        setEditingScrubbleNumber(null);
-    }, []);
-
-    const saveScrubbleNumberEdit = useCallback((newProps: ScrubbleNumberProps) => {
-        if (!editingScrubbleNumber) return;
-
-        const { blockId, elementPath, ...originalProps } = editingScrubbleNumber;
-
-        // Check if any property changed
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
-
-        if (propsChanged) {
-            addScrubbleNumberEdit({
-                blockId,
-                elementPath,
-                originalProps,
-                newProps,
-            });
-        }
-
-        setEditingScrubbleNumber(null);
-    }, [editingScrubbleNumber, addScrubbleNumberEdit]);
-
-    // Cloze Input editing methods
-    const addClozeInputEdit = useCallback((edit: Omit<ClozeInputEdit, 'id' | 'type' | 'timestamp'>) => {
-        const newEdit: ClozeInputEdit = {
-            ...edit,
-            id: generateId(),
-            type: 'clozeInput',
-            timestamp: Date.now(),
-        };
-
-        setPendingEdits(prev => {
-            const existingIndex = prev.findIndex(
-                e => e.type === 'clozeInput' &&
-                    (e as ClozeInputEdit).blockId === edit.blockId &&
-                    (e as ClozeInputEdit).elementPath === edit.elementPath
-            );
-
-            if (existingIndex !== -1) {
-                const updated = [...prev];
-                const existing = updated[existingIndex] as ClozeInputEdit;
-
-                const propsMatch = JSON.stringify(edit.newProps) === JSON.stringify(existing.originalProps);
-                if (propsMatch) {
-                    updated.splice(existingIndex, 1);
-                    return updated;
-                }
-
-                updated[existingIndex] = {
-                    ...existing,
-                    newProps: edit.newProps,
-                    timestamp: Date.now(),
-                };
-                return updated;
-            }
-
-            return [...prev, newEdit];
-        });
-    }, [generateId]);
-
-    const openClozeInputEditor = useCallback((
-        props: ClozeInputProps,
-        blockId: string,
-        elementPath: string
-    ) => {
-        setEditingClozeInput({ ...props, blockId, elementPath });
-    }, []);
-
-    const closeClozeInputEditor = useCallback(() => {
-        setEditingClozeInput(null);
-    }, []);
-
-    const saveClozeInputEdit = useCallback((newProps: ClozeInputProps) => {
-        if (!editingClozeInput) return;
-
-        const { blockId, elementPath, ...originalProps } = editingClozeInput;
-
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
-
-        if (propsChanged) {
-            addClozeInputEdit({
-                blockId,
-                elementPath,
-                originalProps,
-                newProps,
-            });
-        }
-
-        setEditingClozeInput(null);
-    }, [editingClozeInput, addClozeInputEdit]);
-
-    // Cloze Choice editing methods
-    const addClozeChoiceEdit = useCallback((edit: Omit<ClozeChoiceEdit, 'id' | 'type' | 'timestamp'>) => {
-        const newEdit: ClozeChoiceEdit = {
-            ...edit,
-            id: generateId(),
-            type: 'clozeChoice',
-            timestamp: Date.now(),
-        };
-
-        setPendingEdits(prev => {
-            const existingIndex = prev.findIndex(
-                e => e.type === 'clozeChoice' &&
-                    (e as ClozeChoiceEdit).blockId === edit.blockId &&
-                    (e as ClozeChoiceEdit).elementPath === edit.elementPath
-            );
-
-            if (existingIndex !== -1) {
-                const updated = [...prev];
-                const existing = updated[existingIndex] as ClozeChoiceEdit;
-
-                const propsMatch = JSON.stringify(edit.newProps) === JSON.stringify(existing.originalProps);
-                if (propsMatch) {
-                    updated.splice(existingIndex, 1);
-                    return updated;
-                }
-
-                updated[existingIndex] = {
-                    ...existing,
-                    newProps: edit.newProps,
-                    timestamp: Date.now(),
-                };
-                return updated;
-            }
-
-            return [...prev, newEdit];
-        });
-    }, [generateId]);
-
-    const openClozeChoiceEditor = useCallback((
-        props: ClozeChoiceProps,
-        blockId: string,
-        elementPath: string
-    ) => {
-        setEditingClozeChoice({ ...props, blockId, elementPath });
-    }, []);
-
-    const closeClozeChoiceEditor = useCallback(() => {
-        setEditingClozeChoice(null);
-    }, []);
-
-    const saveClozeChoiceEdit = useCallback((newProps: ClozeChoiceProps) => {
-        if (!editingClozeChoice) return;
-
-        const { blockId, elementPath, ...originalProps } = editingClozeChoice;
-
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
-
-        if (propsChanged) {
-            addClozeChoiceEdit({
-                blockId,
-                elementPath,
-                originalProps,
-                newProps,
-            });
-        }
-
-        setEditingClozeChoice(null);
-    }, [editingClozeChoice, addClozeChoiceEdit]);
-
-    // Toggle editing methods
-    const addToggleEdit = useCallback((edit: Omit<ToggleEdit, 'id' | 'type' | 'timestamp'>) => {
-        const newEdit: ToggleEdit = {
-            ...edit,
-            id: generateId(),
-            type: 'toggle',
-            timestamp: Date.now(),
-        };
-
-        setPendingEdits(prev => {
-            const existingIndex = prev.findIndex(
-                e => e.type === 'toggle' &&
-                    (e as ToggleEdit).blockId === edit.blockId &&
-                    (e as ToggleEdit).elementPath === edit.elementPath
-            );
-
-            if (existingIndex !== -1) {
-                const updated = [...prev];
-                const existing = updated[existingIndex] as ToggleEdit;
-
-                const propsMatch = JSON.stringify(edit.newProps) === JSON.stringify(existing.originalProps);
-                if (propsMatch) {
-                    updated.splice(existingIndex, 1);
-                    return updated;
-                }
-
-                updated[existingIndex] = {
-                    ...existing,
-                    newProps: edit.newProps,
-                    timestamp: Date.now(),
-                };
-                return updated;
-            }
-
-            return [...prev, newEdit];
-        });
-    }, [generateId]);
-
-    const openToggleEditor = useCallback((
-        props: ToggleProps,
-        blockId: string,
-        elementPath: string
-    ) => {
-        setEditingToggle({ ...props, blockId, elementPath });
-    }, []);
-
-    const closeToggleEditor = useCallback(() => {
-        setEditingToggle(null);
-    }, []);
-
-    const saveToggleEdit = useCallback((newProps: ToggleProps) => {
-        if (!editingToggle) return;
-
-        const { blockId, elementPath, ...originalProps } = editingToggle;
-
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
-
-        if (propsChanged) {
-            addToggleEdit({
-                blockId,
-                elementPath,
-                originalProps,
-                newProps,
-            });
-        }
-
-        setEditingToggle(null);
-    }, [editingToggle, addToggleEdit]);
-
-    // Tooltip editing methods
-    const addTooltipEdit = useCallback((edit: Omit<TooltipEdit, 'id' | 'type' | 'timestamp'>) => {
-        const newEdit: TooltipEdit = {
-            ...edit,
-            id: generateId(),
-            type: 'tooltip',
-            timestamp: Date.now(),
-        };
-
-        setPendingEdits(prev => {
-            const existingIndex = prev.findIndex(
-                e => e.type === 'tooltip' &&
-                    (e as TooltipEdit).blockId === edit.blockId &&
-                    (e as TooltipEdit).elementPath === edit.elementPath
-            );
-
-            if (existingIndex !== -1) {
-                const updated = [...prev];
-                const existing = updated[existingIndex] as TooltipEdit;
-
-                const propsMatch = JSON.stringify(edit.newProps) === JSON.stringify(existing.originalProps);
-                if (propsMatch) {
-                    updated.splice(existingIndex, 1);
-                    return updated;
-                }
-
-                updated[existingIndex] = {
-                    ...existing,
-                    newProps: edit.newProps,
-                    timestamp: Date.now(),
-                };
-                return updated;
-            }
-
-            return [...prev, newEdit];
-        });
-    }, [generateId]);
-
-    const openTooltipEditor = useCallback((
-        props: TooltipProps,
-        blockId: string,
-        elementPath: string
-    ) => {
-        setEditingTooltip({ ...props, blockId, elementPath });
-    }, []);
-
-    const closeTooltipEditor = useCallback(() => {
-        setEditingTooltip(null);
-    }, []);
-
-    const saveTooltipEdit = useCallback((newProps: TooltipProps) => {
-        if (!editingTooltip) return;
-
-        const { blockId, elementPath, ...originalProps } = editingTooltip;
-
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
-
-        if (propsChanged) {
-            addTooltipEdit({
-                blockId,
-                elementPath,
-                originalProps,
-                newProps,
-            });
-        }
-
-        setEditingTooltip(null);
-    }, [editingTooltip, addTooltipEdit]);
-
-    // Trigger editing methods
-    const addTriggerEdit = useCallback((edit: Omit<TriggerComponentEdit, 'id' | 'type' | 'timestamp'>) => {
-        const newEdit: TriggerComponentEdit = {
-            ...edit,
-            id: generateId(),
-            type: 'trigger',
-            timestamp: Date.now(),
-        };
-
-        setPendingEdits(prev => {
-            const existingIndex = prev.findIndex(
-                e => e.type === 'trigger' &&
-                    (e as TriggerComponentEdit).blockId === edit.blockId &&
-                    (e as TriggerComponentEdit).elementPath === edit.elementPath
-            );
-
-            if (existingIndex !== -1) {
-                const updated = [...prev];
-                const existing = updated[existingIndex] as TriggerComponentEdit;
-
-                const propsMatch = JSON.stringify(edit.newProps) === JSON.stringify(existing.originalProps);
-                if (propsMatch) {
-                    updated.splice(existingIndex, 1);
-                    return updated;
-                }
-
-                updated[existingIndex] = {
-                    ...existing,
-                    newProps: edit.newProps,
-                    timestamp: Date.now(),
-                };
-                return updated;
-            }
-
-            return [...prev, newEdit];
-        });
-    }, [generateId]);
-
-    const openTriggerEditor = useCallback((
-        props: TriggerComponentProps,
-        blockId: string,
-        elementPath: string
-    ) => {
-        setEditingTrigger({ ...props, blockId, elementPath });
-    }, []);
-
-    const closeTriggerEditor = useCallback(() => {
-        setEditingTrigger(null);
-    }, []);
-
-    const saveTriggerEdit = useCallback((newProps: TriggerComponentProps) => {
-        if (!editingTrigger) {
-            console.warn('[TriggerEdit] saveTriggerEdit called but editingTrigger is null');
-            return;
-        }
-
-        const { blockId, elementPath, ...originalProps } = editingTrigger;
-
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
-
-        if (import.meta.env.DEV) {
-            console.log('[TriggerEdit] Save:', { blockId, elementPath, propsChanged, originalProps, newProps });
-        }
-
-        if (propsChanged) {
-            addTriggerEdit({
-                blockId,
-                elementPath,
-                originalProps,
-                newProps,
-            });
-        }
-
-        setEditingTrigger(null);
-    }, [editingTrigger, addTriggerEdit]);
 
     // Hyperlink editing methods
     const addHyperlinkEdit = useCallback((edit: Omit<HyperlinkComponentEdit, 'id' | 'type' | 'timestamp'>) => {
+        updateProvisionalInlinePlaceholder(edit.componentId, 'inlineHyperlink', edit.newProps);
         const newEdit: HyperlinkComponentEdit = {
             ...edit,
             id: generateId(),
@@ -937,8 +370,7 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
         setPendingEdits(prev => {
             const existingIndex = prev.findIndex(
                 e => e.type === 'hyperlink' &&
-                    (e as HyperlinkComponentEdit).blockId === edit.blockId &&
-                    (e as HyperlinkComponentEdit).elementPath === edit.elementPath
+                    isSameInlineTarget(e as HyperlinkComponentEdit, edit)
             );
 
             if (existingIndex !== -1) {
@@ -972,20 +404,23 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
     }, []);
 
     const closeHyperlinkEditor = useCallback(() => {
+        cancelProvisionalInlineComponent(editingHyperlink, 'inlineHyperlink');
         setEditingHyperlink(null);
-    }, []);
+    }, [editingHyperlink, cancelProvisionalInlineComponent]);
 
     const saveHyperlinkEdit = useCallback((newProps: HyperlinkComponentProps) => {
         if (!editingHyperlink) return;
 
-        const { blockId, elementPath, ...originalProps } = editingHyperlink;
+        const { blockId, elementPath, componentId, isNew, ...originalProps } = editingHyperlink;
 
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
+        const propsChanged = isNew || JSON.stringify(newProps) !== JSON.stringify(originalProps);
 
         if (propsChanged) {
             addHyperlinkEdit({
                 blockId,
                 elementPath,
+                componentId,
+                manualSaveOnly: isNew === true,
                 originalProps,
                 newProps,
             });
@@ -994,391 +429,51 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
         setEditingHyperlink(null);
     }, [editingHyperlink, addHyperlinkEdit]);
 
-    // InlineFormula editing methods
-    const addInlineFormulaEdit = useCallback((edit: Omit<InlineFormulaEdit, 'id' | 'type' | 'timestamp'>) => {
-        const newEdit: InlineFormulaEdit = {
-            ...edit,
-            id: generateId(),
-            type: 'inlineFormula',
-            timestamp: Date.now(),
-        };
-
-        setPendingEdits(prev => {
-            // 1. Check if there is a pending STRUCTURE edit with action 'add' for this block.
-            //    If so, update the inlineFormula marker props in the structure edit content
-            //    so the structure agent creates the formula with the correct (edited) props.
-            //    This prevents a stale InlineFormulaEdit from inserting a duplicate formula
-            //    when the backend processes text edits before structure edits.
-            const structureAddIndex = prev.findIndex(
-                e => e.type === 'structure' &&
-                    (e as StructureEdit).action === 'add' &&
-                    (e as StructureEdit).blockId === edit.blockId
-            );
-
-            if (structureAddIndex !== -1) {
-                const updated = [...prev];
-                const existingStructure = updated[structureAddIndex] as StructureEdit;
-                const content = existingStructure.content || '';
-
-                // Update the first inlineFormula marker with the new props
-                const markerRegex = /\{\{inlineFormula:([^|}]+)(?:\|[A-Za-z0-9+/=]*)?\}\}/;
-                const markerMatch = content.match(markerRegex);
-
-                if (markerMatch) {
-                    try {
-                        const updatedProps: Record<string, unknown> = {
-                            latex: edit.newProps.latex,
-                        };
-                        if (edit.newProps.colorMap && Object.keys(edit.newProps.colorMap).length > 0) {
-                            updatedProps.colorMap = edit.newProps.colorMap;
-                        }
-                        if (edit.newProps.color && edit.newProps.color !== '#000000') {
-                            updatedProps.color = edit.newProps.color;
-                        }
-                        const newBase64 = btoa(JSON.stringify(updatedProps));
-                        const newContent = content.replace(
-                            markerRegex,
-                            `{{inlineFormula:${markerMatch[1]}|${newBase64}}}`
-                        );
-                        updated[structureAddIndex] = {
-                            ...existingStructure,
-                            content: newContent,
-                            timestamp: Date.now(),
-                        };
-                    } catch {
-                        // Encoding failed — fall through to add as normal edit
-                    }
-                }
-
-                // Still add the InlineFormulaEdit for frontend visual feedback
-                // (the InlineFormula component reads pending edits for effectiveLatex)
-                const existingEditIndex = updated.findIndex(
-                    e => e.type === 'inlineFormula' &&
-                        (e as InlineFormulaEdit).blockId === edit.blockId &&
-                        (e as InlineFormulaEdit).elementPath === edit.elementPath
-                );
-                if (existingEditIndex !== -1) {
-                    updated[existingEditIndex] = {
-                        ...(updated[existingEditIndex] as InlineFormulaEdit),
-                        newProps: edit.newProps,
-                        timestamp: Date.now(),
-                    };
-                } else {
-                    updated.push(newEdit);
-                }
-                return updated;
-            }
-
-            // 2. Normal flow: check for existing formula edit for the same element
-            const existingIndex = prev.findIndex(
-                e => e.type === 'inlineFormula' &&
-                    (e as InlineFormulaEdit).blockId === edit.blockId &&
-                    (e as InlineFormulaEdit).elementPath === edit.elementPath
-            );
-
-            if (existingIndex !== -1) {
-                const updated = [...prev];
-                const existing = updated[existingIndex] as InlineFormulaEdit;
-
-                const propsMatch = JSON.stringify(edit.newProps) === JSON.stringify(existing.originalProps);
-                if (propsMatch) {
-                    updated.splice(existingIndex, 1);
-                    return updated;
-                }
-
-                updated[existingIndex] = {
-                    ...existing,
-                    newProps: edit.newProps,
-                    timestamp: Date.now(),
-                };
-                return updated;
-            }
-
-            return [...prev, newEdit];
-        });
-    }, [generateId]);
-
-    const openInlineFormulaEditor = useCallback((
-        props: InlineFormulaProps,
-        blockId: string,
-        elementPath: string
-    ) => {
-        setEditingInlineFormula({ ...props, blockId, elementPath });
-    }, []);
-
-    const closeInlineFormulaEditor = useCallback(() => {
-        setEditingInlineFormula(null);
-    }, []);
-
-    const saveInlineFormulaEdit = useCallback((newProps: InlineFormulaProps) => {
-        if (!editingInlineFormula) return;
-
-        const { blockId, elementPath, ...originalProps } = editingInlineFormula;
-
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
-
-        if (propsChanged) {
-            addInlineFormulaEdit({
-                blockId,
-                elementPath,
-                originalProps,
-                newProps,
-            });
-        }
-
-        setEditingInlineFormula(null);
-    }, [editingInlineFormula, addInlineFormulaEdit]);
-
-    // SpotColor editing methods
-    const addSpotColorEdit = useCallback((edit: Omit<SpotColorEdit, 'id' | 'type' | 'timestamp'>) => {
-        const newEdit: SpotColorEdit = {
-            ...edit,
-            id: generateId(),
-            type: 'spotColor',
-            timestamp: Date.now(),
-        };
-
-        setPendingEdits(prev => {
-            const existingIndex = prev.findIndex(
-                e => e.type === 'spotColor' &&
-                    (e as SpotColorEdit).blockId === edit.blockId &&
-                    (e as SpotColorEdit).elementPath === edit.elementPath
-            );
-
-            if (existingIndex !== -1) {
-                const updated = [...prev];
-                const existing = updated[existingIndex] as SpotColorEdit;
-
-                const propsMatch = JSON.stringify(edit.newProps) === JSON.stringify(existing.originalProps);
-                if (propsMatch) {
-                    updated.splice(existingIndex, 1);
-                    return updated;
-                }
-
-                updated[existingIndex] = {
-                    ...existing,
-                    newProps: edit.newProps,
-                    timestamp: Date.now(),
-                };
-                return updated;
-            }
-
-            return [...prev, newEdit];
-        });
-    }, [generateId]);
-
-    const openSpotColorEditor = useCallback((
-        props: SpotColorComponentProps,
-        blockId: string,
-        elementPath: string
-    ) => {
-        setEditingSpotColor({ ...props, blockId, elementPath });
-    }, []);
-
-    const closeSpotColorEditor = useCallback(() => {
-        setEditingSpotColor(null);
-    }, []);
-
-    const saveSpotColorEdit = useCallback((newProps: SpotColorComponentProps) => {
-        if (!editingSpotColor) return;
-
-        const { blockId, elementPath, ...originalProps } = editingSpotColor;
-
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
-
-        if (propsChanged) {
-            addSpotColorEdit({
-                blockId,
-                elementPath,
-                originalProps,
-                newProps,
-            });
-        }
-
-        setEditingSpotColor(null);
-    }, [editingSpotColor, addSpotColorEdit]);
-
-    // LinkedHighlight editing methods
-    const addLinkedHighlightEdit = useCallback((edit: Omit<LinkedHighlightEdit, 'id' | 'type' | 'timestamp'>) => {
-        const newEdit: LinkedHighlightEdit = {
-            ...edit,
-            id: generateId(),
-            type: 'linkedHighlight',
-            timestamp: Date.now(),
-        };
-
-        setPendingEdits(prev => {
-            const existingIndex = prev.findIndex(
-                e => e.type === 'linkedHighlight' &&
-                    (e as LinkedHighlightEdit).blockId === edit.blockId &&
-                    (e as LinkedHighlightEdit).elementPath === edit.elementPath
-            );
-
-            if (existingIndex !== -1) {
-                const updated = [...prev];
-                const existing = updated[existingIndex] as LinkedHighlightEdit;
-
-                const propsMatch = JSON.stringify(edit.newProps) === JSON.stringify(existing.originalProps);
-                if (propsMatch) {
-                    updated.splice(existingIndex, 1);
-                    return updated;
-                }
-
-                updated[existingIndex] = {
-                    ...existing,
-                    newProps: edit.newProps,
-                    timestamp: Date.now(),
-                };
-                return updated;
-            }
-
-            return [...prev, newEdit];
-        });
-    }, [generateId]);
-
-    const openLinkedHighlightEditor = useCallback((
-        props: LinkedHighlightComponentProps,
-        blockId: string,
-        elementPath: string
-    ) => {
-        setEditingLinkedHighlight({ ...props, blockId, elementPath });
-    }, []);
-
-    const closeLinkedHighlightEditor = useCallback(() => {
-        setEditingLinkedHighlight(null);
-    }, []);
-
-    const saveLinkedHighlightEdit = useCallback((newProps: LinkedHighlightComponentProps) => {
-        if (!editingLinkedHighlight) return;
-
-        const { blockId, elementPath, ...originalProps } = editingLinkedHighlight;
-
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
-
-        if (propsChanged) {
-            addLinkedHighlightEdit({
-                blockId,
-                elementPath,
-                originalProps,
-                newProps,
-            });
-        }
-
-        setEditingLinkedHighlight(null);
-    }, [editingLinkedHighlight, addLinkedHighlightEdit]);
-
-    // FormulaBlock editing methods
-    const addFormulaBlockEdit = useCallback((edit: Omit<FormulaBlockEdit, 'id' | 'type' | 'timestamp'>) => {
-        const newEdit: FormulaBlockEdit = {
-            ...edit,
-            id: generateId(),
-            type: 'formulaBlock',
-            timestamp: Date.now(),
-        };
-
-        setPendingEdits(prev => {
-            const existingIndex = prev.findIndex(
-                e => e.type === 'formulaBlock' &&
-                    (e as FormulaBlockEdit).blockId === edit.blockId &&
-                    (e as FormulaBlockEdit).elementPath === edit.elementPath
-            );
-
-            if (existingIndex !== -1) {
-                const updated = [...prev];
-                const existing = updated[existingIndex] as FormulaBlockEdit;
-
-                const propsMatch = JSON.stringify(edit.newProps) === JSON.stringify(existing.originalProps);
-                if (propsMatch) {
-                    updated.splice(existingIndex, 1);
-                    return updated;
-                }
-
-                updated[existingIndex] = {
-                    ...existing,
-                    newProps: edit.newProps,
-                    timestamp: Date.now(),
-                };
-                return updated;
-            }
-
-            return [...prev, newEdit];
-        });
-    }, [generateId]);
-
-    const openFormulaBlockEditor = useCallback((
-        props: FormulaBlockComponentProps,
-        blockId: string,
-        elementPath: string
-    ) => {
-        setEditingFormulaBlock({ ...props, blockId, elementPath });
-    }, []);
-
-    const closeFormulaBlockEditor = useCallback(() => {
-        setEditingFormulaBlock(null);
-    }, []);
-
-    const saveFormulaBlockEdit = useCallback((newProps: FormulaBlockComponentProps) => {
-        if (!editingFormulaBlock) return;
-
-        const { blockId, elementPath, isNew, ...originalProps } = editingFormulaBlock;
-
-        const propsChanged = JSON.stringify(newProps) !== JSON.stringify(originalProps);
-
-        if (propsChanged) {
-            addFormulaBlockEdit({
-                blockId,
-                elementPath,
-                originalProps,
-                newProps,
-            });
-        }
-
-        setEditingFormulaBlock(null);
-    }, [editingFormulaBlock, addFormulaBlockEdit]);
-
     // Filter out inline component edits whose block already has a structure 'add' edit
     // (including 'modify-content' edits for inline component insertion into existing paragraphs).
     // Before filtering, merge inline edit props into the structure edit's content markers
-    // so the structure agent writes the component with the user's edited props (not defaults).
+    // so deterministic block creation writes the user's edited props (not defaults).
     const _INLINE_EDIT_TYPES = new Set([
-        'inlineFormula', 'tooltip', 'trigger', 'hyperlink',
-        'scrubbleNumber', 'clozeInput', 'clozeChoice', 'toggle',
-        'spotColor', 'linkedHighlight',
+        'hyperlink',
     ]);
 
     // Map edit type → marker component type used in content markers
     const _EDIT_TO_MARKER: Record<string, string> = {
-        scrubbleNumber: 'inlineScrubbleNumber',
-        clozeInput: 'inlineClozeInput',
-        clozeChoice: 'inlineClozeChoice',
-        toggle: 'inlineToggle',
-        tooltip: 'inlineTooltip',
-        trigger: 'inlineTrigger',
         hyperlink: 'inlineHyperlink',
-        inlineFormula: 'inlineFormula',
-        spotColor: 'inlineSpotColor',
-        linkedHighlight: 'inlineLinkedHighlight',
     };
 
     /** Replace a marker's base64 props in the content string with updated props. */
-    const mergePropsIntoMarker = (content: string, editType: string, newProps: Record<string, unknown>): string => {
+    const mergePropsIntoMarker = (
+        content: string,
+        editType: string,
+        newProps: Record<string, unknown>,
+        componentId?: string,
+    ): string => {
         const markerType = _EDIT_TO_MARKER[editType];
         if (!markerType) return content;
 
-        // Match the first marker of this type:  {{type:id|base64}}  or  {{type:id}}
-        const re = new RegExp(`\\{\\{${markerType}:([^|}]+)(?:\\|[A-Za-z0-9+/=]*)?\\}\\}`);
+        // New blocks can contain several components of the same type. Match
+        // the stable marker id when available so editing the second hyperlink
+        // cannot accidentally overwrite the first one.
+        const markerId = componentId ? componentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '[^|}]+';
+        const re = new RegExp(`\\{\\{${markerType}:(${markerId})(?:\\|[A-Za-z0-9+/=]*)?\\}\\}`);
         const m = content.match(re);
         if (!m) return content;
 
         try {
-            const encoded = btoa(JSON.stringify(newProps));
+            const persistedProps = { ...newProps };
+            delete persistedProps.componentId;
+            const encoded = encodeMarkerProps(persistedProps);
             return content.replace(m[0], `{{${markerType}:${m[1]}|${encoded}}}`);
         } catch {
             return content;
         }
     };
 
-    const filterEditsForBackend = useCallback((edits: PendingEdit[]): PendingEdit[] => {
+    const filterEditsForBackend = useCallback((
+        edits: PendingEdit[],
+        persistEmptyBlocks = false,
+    ): PendingEdit[] => {
         // Identify blocks with structure 'add' edits
         const structureAddEdits = edits.filter(
             e => e.type === 'structure' && (e as StructureEdit).action === 'add'
@@ -1397,6 +492,7 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
         const updatedEdits = edits.map(e => {
             if (e.type !== 'structure' || (e as StructureEdit).action !== 'add') return e;
             const se = e as StructureEdit;
+
             if (!se.content) return e;
 
             // Find inline edits targeting this block
@@ -1407,20 +503,123 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
 
             let updatedContent = se.content;
             for (const ie of related) {
-                updatedContent = mergePropsIntoMarker(updatedContent, ie.type, (ie as any).newProps);
+                updatedContent = mergePropsIntoMarker(
+                    updatedContent,
+                    ie.type,
+                    (ie as any).newProps,
+                    (ie as any).componentId,
+                );
             }
 
-            if (updatedContent === se.content) return e;
-            return { ...se, content: updatedContent };
+            const manualSaveOnly = related.some(edit =>
+                (edit as InlineComponentIdentity).manualSaveOnly
+            );
+            if (updatedContent === se.content && !manualSaveOnly) return e;
+            return { ...se, content: updatedContent, ...(manualSaveOnly ? { manualSaveOnly: true } : {}) };
+        });
+
+        // Keep an untouched add-block as a placeholder during ordinary edit
+        // notifications so auto-save knows it is still an active draft. An
+        // explicit save/Enter opts into converting it to a real empty paragraph.
+        const normalizedEdits = updatedEdits.map(e => {
+            if (
+                persistEmptyBlocks &&
+                e.type === 'structure' && e.action === 'add' &&
+                e.blockType === 'placeholder'
+            ) {
+                return {
+                    ...e,
+                    blockType: 'paragraph',
+                    content: '',
+                } as StructureEdit;
+            }
+            return e;
         });
 
         // Filter out inline edits (their props are now merged into the structure edit)
-        return updatedEdits.filter(e => {
+        const filtered = normalizedEdits.filter(e => {
             if (_INLINE_EDIT_TYPES.has(e.type) && structureAddBlockIds.has((e as any).blockId)) {
                 return false;
             }
             return true;
         });
+
+        // Existing editable text blocks are persisted as one canonical stream:
+        // text + every inline component (with current effective props) in DOM
+        // order. This makes combinations independent of mutation ordering and
+        // disambiguates repeated components of the same type.
+        const snapshotBlockIds = new Set(
+            filtered
+                .filter(e => e.type === 'text' || _INLINE_EDIT_TYPES.has(e.type))
+                .map(e => (e as TextEdit).blockId)
+                .filter(blockId => blockId && !structureAddBlockIds.has(blockId))
+        );
+        const snapshots: BlockContentEdit[] = [];
+        const snapped = new Set<string>();
+
+        for (const blockId of snapshotBlockIds) {
+            const elements = Array.from(
+                document.querySelectorAll<HTMLElement>('[data-editable="true"]')
+            ).filter(el => el.closest('[data-block-id]')?.getAttribute('data-block-id') === blockId);
+
+            for (const element of elements) {
+                // Multiple editable elements in one block require an id so the
+                // backend never guesses which JSX element should be replaced.
+                if (elements.length > 1 && !element.id) continue;
+                const key = `${blockId}:${element.id || 'only'}`;
+                if (snapped.has(key)) continue;
+                snapped.add(key);
+                let snapshotContent = extractContentWithMarkers(element);
+                // A freshly inserted slash-command component can still be a
+                // plain DOM placeholder while its configuration panel closes.
+                // Merge the validated panel values into its marker before the
+                // inline edit is replaced by this canonical block snapshot.
+                for (const inlineEdit of filtered.filter(
+                    candidate => _INLINE_EDIT_TYPES.has(candidate.type) &&
+                        (candidate as InlineComponentIdentity & { blockId?: string }).blockId === blockId
+                )) {
+                    const typedInlineEdit = inlineEdit as PendingEdit & {
+                        componentId?: string;
+                        newProps?: Record<string, unknown>;
+                    };
+                    if (!typedInlineEdit.newProps) continue;
+                    snapshotContent = mergePropsIntoMarker(
+                        snapshotContent,
+                        typedInlineEdit.type,
+                        typedInlineEdit.newProps,
+                        typedInlineEdit.componentId,
+                    );
+                }
+                snapshots.push({
+                    id: `block-content:${key}`,
+                    type: 'blockContent',
+                    blockId,
+                    ...(element.id ? { elementId: element.id } : {}),
+                    newContent: snapshotContent,
+                    manualSaveOnly: filtered.some(edit =>
+                        (edit as { manualSaveOnly?: boolean }).manualSaveOnly &&
+                        (edit as { blockId?: string }).blockId === blockId
+                    ),
+                    timestamp: Math.max(
+                        ...filtered
+                            .filter(e => (e as any).blockId === blockId)
+                            .map(e => e.timestamp),
+                        Date.now(),
+                    ),
+                });
+            }
+        }
+
+        if (snapshots.length === 0) return filtered;
+        const snapshottedBlockIds = new Set(snapshots.map(snapshot => snapshot.blockId));
+        return [
+            ...filtered.filter(e => {
+                const blockId = (e as any).blockId as string | undefined;
+                return !blockId || !snapshottedBlockIds.has(blockId) ||
+                    (e.type !== 'text' && !_INLINE_EDIT_TYPES.has(e.type));
+            }),
+            ...snapshots,
+        ];
     }, []);
 
     // Notify parent whenever edits change
@@ -1430,6 +629,7 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
             type: 'edits-changed',
             edits: editsForBackend,
             count: editsForBackend.length,
+            revision: pendingRevisionRef.current,
         }, '*');
     }, [pendingEdits, filterEditsForBackend]);
 
@@ -1459,142 +659,131 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
                     type: 'edits-response',
                     edits: editsForBackend,
                     count: editsForBackend.length,
+                    revision: pendingRevisionRef.current,
                 }, '*');
+            }
+
+            // Clear only the exact revision that the backend saved. If the
+            // teacher kept typing during the request, retain everything; the
+            // already-saved portion is safe to send again because edits are
+            // deterministic and idempotent.
+            if (event.data.type === 'ack-saved') {
+                const requestId = event.data.requestId;
+                const cleared = event.data.revision === pendingRevisionRef.current;
+                if (cleared) clearAllEdits();
+                const currentEdits = cleared
+                    ? []
+                    : filterEditsForBackend(pendingEditsRef.current);
+                window.parent.postMessage({
+                    type: 'save-ack-result',
+                    requestId,
+                    cleared,
+                    edits: currentEdits,
+                    revision: pendingRevisionRef.current,
+                }, '*');
+            }
+
+            // Saving must first flush whichever contentEditable currently has
+            // focus. Two animation frames allow React state and effective
+            // inline-component props to reach the DOM before it is serialized.
+            if (event.data.type === 'prepare-save') {
+                const requestId = event.data.requestId;
+                if (openComponentEditorRef.current) {
+                    window.parent.postMessage({
+                        type: 'save-ready',
+                        requestId,
+                        error: 'Apply or cancel the open component editor before saving.',
+                        edits: [],
+                        count: 0,
+                        revision: pendingRevisionRef.current,
+                    }, '*');
+                    return;
+                }
+                window.dispatchEvent(new CustomEvent('editor-flush-request'));
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    const editsForBackend = filterEditsForBackend(
+                        pendingEditsRef.current,
+                        event.data.persistEmptyBlocks === true,
+                    );
+                    window.parent.postMessage({
+                        type: 'save-ready',
+                        requestId,
+                        edits: editsForBackend,
+                        count: editsForBackend.length,
+                        revision: pendingRevisionRef.current,
+                    }, '*');
+                }));
             }
         };
 
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, [enableEditing, disableEditing, clearAllEdits]);
+    }, [enableEditing, disableEditing, clearAllEdits, filterEditsForBackend]);
+
+    // Listen for inline component editor open requests (from slash command insertion)
+    // This opens the appropriate editor modal immediately after an inline component
+    // placeholder is inserted, providing the "configure first" workflow.
+    useEffect(() => {
+        const handleEditorOpenRequest = (e: Event) => {
+            const { commandType, uniqueId, blockId } = (e as CustomEvent).detail as {
+                commandType: string;
+                uniqueId: string;
+                blockId: string;
+            };
+
+            // Each inline component computes its own elementPath using a specific pattern.
+            // When LessonView renders from a marker without encoded props, components that
+            // accept varName get `var_${uniqueId}` as default. We must match that identity.
+            switch (commandType) {
+                case 'inlineHyperlink': {
+                    // LessonView renders: <InlineHyperlink>link</InlineHyperlink>
+                    // Component identity: `hyperlink-${blockId}-${childText ?? href ?? targetBlockId ?? 'link'}`
+                    // childText = 'link' (from children)
+                    const elementPath = `hyperlink-${blockId}-link`;
+                    openHyperlinkEditor(
+                        { text: 'link', href: undefined, targetBlockId: undefined, isNew: true, componentId: uniqueId },
+                        blockId,
+                        elementPath,
+                    );
+                    break;
+                }
+            }
+        };
+
+        window.addEventListener('inline-editor-open-request', handleEditorOpenRequest);
+        return () => window.removeEventListener('inline-editor-open-request', handleEditorOpenRequest);
+    }, [
+        openHyperlinkEditor,
+    ]);
 
     const value = useMemo(() => ({
         isEditing,
         pendingEdits,
-        editingScrubbleNumber,
-        editingClozeInput,
-        editingClozeChoice,
-        editingToggle,
-        editingTooltip,
-        editingTrigger,
         editingHyperlink,
-        editingInlineFormula,
-        editingSpotColor,
-        editingLinkedHighlight,
-        editingFormulaBlock,
         enableEditing,
         disableEditing,
         addTextEdit,
-        addScrubbleNumberEdit,
-        addClozeInputEdit,
-        addClozeChoiceEdit,
-        addToggleEdit,
-        addTooltipEdit,
-        addTriggerEdit,
         addHyperlinkEdit,
         addStructureEdit,
         removeEdit,
         clearAllEdits,
-        openScrubbleNumberEditor,
-        closeScrubbleNumberEditor,
-        saveScrubbleNumberEdit,
-        openClozeInputEditor,
-        closeClozeInputEditor,
-        saveClozeInputEdit,
-        openClozeChoiceEditor,
-        closeClozeChoiceEditor,
-        saveClozeChoiceEdit,
-        openToggleEditor,
-        closeToggleEditor,
-        saveToggleEdit,
-        openTooltipEditor,
-        closeTooltipEditor,
-        saveTooltipEdit,
-        openTriggerEditor,
-        closeTriggerEditor,
-        saveTriggerEdit,
         openHyperlinkEditor,
         closeHyperlinkEditor,
         saveHyperlinkEdit,
-        addInlineFormulaEdit,
-        openInlineFormulaEditor,
-        closeInlineFormulaEditor,
-        saveInlineFormulaEdit,
-        addSpotColorEdit,
-        openSpotColorEditor,
-        closeSpotColorEditor,
-        saveSpotColorEdit,
-        addLinkedHighlightEdit,
-        openLinkedHighlightEditor,
-        closeLinkedHighlightEditor,
-        saveLinkedHighlightEdit,
-        addFormulaBlockEdit,
-        openFormulaBlockEditor,
-        closeFormulaBlockEditor,
-        saveFormulaBlockEdit,
     }), [
         isEditing,
         pendingEdits,
-        editingScrubbleNumber,
-        editingClozeInput,
-        editingClozeChoice,
-        editingToggle,
-        editingTooltip,
-        editingTrigger,
         editingHyperlink,
-        editingInlineFormula,
-        editingSpotColor,
-        editingLinkedHighlight,
-        editingFormulaBlock,
         enableEditing,
         disableEditing,
         addTextEdit,
-        addScrubbleNumberEdit,
-        addClozeInputEdit,
-        addClozeChoiceEdit,
-        addToggleEdit,
-        addTooltipEdit,
-        addTriggerEdit,
         addHyperlinkEdit,
         addStructureEdit,
         removeEdit,
         clearAllEdits,
-        openScrubbleNumberEditor,
-        closeScrubbleNumberEditor,
-        saveScrubbleNumberEdit,
-        openClozeInputEditor,
-        closeClozeInputEditor,
-        saveClozeInputEdit,
-        openClozeChoiceEditor,
-        closeClozeChoiceEditor,
-        saveClozeChoiceEdit,
-        openToggleEditor,
-        closeToggleEditor,
-        saveToggleEdit,
-        openTooltipEditor,
-        closeTooltipEditor,
-        saveTooltipEdit,
-        openTriggerEditor,
-        closeTriggerEditor,
-        saveTriggerEdit,
         openHyperlinkEditor,
         closeHyperlinkEditor,
         saveHyperlinkEdit,
-        addInlineFormulaEdit,
-        openInlineFormulaEditor,
-        closeInlineFormulaEditor,
-        saveInlineFormulaEdit,
-        addSpotColorEdit,
-        openSpotColorEditor,
-        closeSpotColorEditor,
-        saveSpotColorEdit,
-        addLinkedHighlightEdit,
-        openLinkedHighlightEditor,
-        closeLinkedHighlightEditor,
-        saveLinkedHighlightEdit,
-        addFormulaBlockEdit,
-        openFormulaBlockEditor,
-        closeFormulaBlockEditor,
-        saveFormulaBlockEdit,
     ]);
 
     // Check if running standalone (not in iframe)
@@ -1608,7 +797,7 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
             {children}
 
             {/* Debug panel - only visible in editor mode */}
-            {isEditor && (
+            {false && (
                 <>
                     {/* Debug toggle button */}
                     <button
@@ -1720,17 +909,9 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
                                                 <span style={{
                                                     fontWeight: 600,
                                                     color: edit.type === 'text' ? '#60a5fa' :
-                                                        edit.type === 'formulaBlock' ? '#a78bfa' :
-                                                            edit.type === 'structure' ? '#34d399' :
-                                                                edit.type === 'clozeInput' ? '#38bdf8' :
-                                                                    edit.type === 'clozeChoice' ? '#f472b6' :
-                                                                        edit.type === 'toggle' ? '#c084fc' :
-                                                                            edit.type === 'tooltip' ? '#f59e0b' :
-                                                                                edit.type === 'trigger' ? '#10B981' :
-                                                                                    edit.type === 'hyperlink' ? '#10B981' :
-                                                                                        edit.type === 'inlineFormula' ? '#8B5CF6' :
-                                                                                            edit.type === 'spotColor' ? '#3cc499' :
-                                                                                                edit.type === 'linkedHighlight' ? '#3b82f6' : '#fbbf24'
+                                                        edit.type === 'structure' ? '#34d399' :
+                                                            edit.type === 'hyperlink' ? '#10B981' :
+                                                                '#fbbf24'
                                                 }}>
                                                     {edit.type.toUpperCase()}
                                                     {edit.type === 'structure' && ` (${(edit as any).action})`}
@@ -1746,14 +927,6 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
                                                         <div style={{ color: '#9ca3af' }}>
                                                             "{(edit as any).originalText}" →
                                                             "{(edit as any).newText}"
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {edit.type === 'formulaBlock' && (
-                                                    <>
-                                                        <div>📍 {(edit as any).blockId}</div>
-                                                        <div style={{ fontFamily: 'monospace', color: '#9ca3af' }}>
-                                                            {(edit as any).newProps?.latex}
                                                         </div>
                                                     </>
                                                 )}
@@ -1774,83 +947,6 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
                                                         )}
                                                     </>
                                                 )}
-                                                {edit.type === 'scrubbleNumber' && (
-                                                    <>
-                                                        <div>📍 {(edit as ScrubbleNumberEdit).blockId}</div>
-                                                        <div style={{ color: '#9ca3af' }}>
-                                                            🔢 Path: {(edit as ScrubbleNumberEdit).elementPath}
-                                                        </div>
-                                                        <div style={{ color: '#9ca3af', fontSize: '11px' }}>
-                                                            varName: {(edit as ScrubbleNumberEdit).newProps.varName || '(none)'} |
-                                                            default: {(edit as ScrubbleNumberEdit).newProps.defaultValue} |
-                                                            range: [{(edit as ScrubbleNumberEdit).newProps.min}, {(edit as ScrubbleNumberEdit).newProps.max}] |
-                                                            step: {(edit as ScrubbleNumberEdit).newProps.step}
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {edit.type === 'clozeInput' && (
-                                                    <>
-                                                        <div>📍 {(edit as ClozeInputEdit).blockId}</div>
-                                                        <div style={{ color: '#9ca3af' }}>
-                                                            📝 Path: {(edit as ClozeInputEdit).elementPath}
-                                                        </div>
-                                                        <div style={{ color: '#9ca3af', fontSize: '11px' }}>
-                                                            varName: {(edit as ClozeInputEdit).newProps.varName || '(none)'} |
-                                                            answer: {(edit as ClozeInputEdit).newProps.correctAnswer || '(none)'} |
-                                                            caseSensitive: {String((edit as ClozeInputEdit).newProps.caseSensitive ?? false)}
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {edit.type === 'clozeChoice' && (
-                                                    <>
-                                                        <div>📍 {(edit as ClozeChoiceEdit).blockId}</div>
-                                                        <div style={{ color: '#9ca3af' }}>
-                                                            📝 Path: {(edit as ClozeChoiceEdit).elementPath}
-                                                        </div>
-                                                        <div style={{ color: '#9ca3af', fontSize: '11px' }}>
-                                                            varName: {(edit as ClozeChoiceEdit).newProps.varName || '(none)'} |
-                                                            answer: {(edit as ClozeChoiceEdit).newProps.correctAnswer || '(none)'} |
-                                                            options: [{(edit as ClozeChoiceEdit).newProps.options?.join(', ') || ''}]
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {edit.type === 'toggle' && (
-                                                    <>
-                                                        <div>📍 {(edit as ToggleEdit).blockId}</div>
-                                                        <div style={{ color: '#9ca3af' }}>
-                                                            🔄 Path: {(edit as ToggleEdit).elementPath}
-                                                        </div>
-                                                        <div style={{ color: '#9ca3af', fontSize: '11px' }}>
-                                                            varName: {(edit as ToggleEdit).newProps.varName || '(none)'} |
-                                                            options: [{(edit as ToggleEdit).newProps.options?.join(', ') || ''}]
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {edit.type === 'tooltip' && (
-                                                    <>
-                                                        <div>📍 {(edit as TooltipEdit).blockId}</div>
-                                                        <div style={{ color: '#9ca3af' }}>
-                                                            💡 Path: {(edit as TooltipEdit).elementPath}
-                                                        </div>
-                                                        <div style={{ color: '#9ca3af', fontSize: '11px' }}>
-                                                            text: {(edit as TooltipEdit).newProps.text || '(none)'} |
-                                                            tooltip: {(edit as TooltipEdit).newProps.tooltip?.substring(0, 30) || '(none)'}...
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {edit.type === 'trigger' && (
-                                                    <>
-                                                        <div>📍 {(edit as TriggerComponentEdit).blockId}</div>
-                                                        <div style={{ color: '#9ca3af' }}>
-                                                            ⚡ Path: {(edit as TriggerComponentEdit).elementPath}
-                                                        </div>
-                                                        <div style={{ color: '#9ca3af', fontSize: '11px' }}>
-                                                            text: {(edit as TriggerComponentEdit).newProps.text || '(none)'} |
-                                                            varName: {(edit as TriggerComponentEdit).newProps.varName || '(none)'} |
-                                                            value: {String((edit as TriggerComponentEdit).newProps.value ?? '(none)')}
-                                                        </div>
-                                                    </>
-                                                )}
                                                 {edit.type === 'hyperlink' && (
                                                     <>
                                                         <div>📍 {(edit as HyperlinkComponentEdit).blockId}</div>
@@ -1861,43 +957,6 @@ export const EditingProvider = ({ children }: EditingProviderProps) => {
                                                             text: {(edit as HyperlinkComponentEdit).newProps.text || '(none)'} |
                                                             href: {(edit as HyperlinkComponentEdit).newProps.href || '(none)'} |
                                                             target: {(edit as HyperlinkComponentEdit).newProps.targetBlockId || '(none)'}
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {edit.type === 'inlineFormula' && (
-                                                    <>
-                                                        <div>📍 {(edit as InlineFormulaEdit).blockId}</div>
-                                                        <div style={{ color: '#9ca3af' }}>
-                                                            📐 Path: {(edit as InlineFormulaEdit).elementPath}
-                                                        </div>
-                                                        <div style={{ color: '#9ca3af', fontSize: '11px', fontFamily: 'monospace' }}>
-                                                            latex: {(edit as InlineFormulaEdit).newProps.latex?.substring(0, 40) || '(none)'}
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {edit.type === 'spotColor' && (
-                                                    <>
-                                                        <div>📍 {(edit as SpotColorEdit).blockId}</div>
-                                                        <div style={{ color: '#9ca3af' }}>
-                                                            🎨 Path: {(edit as SpotColorEdit).elementPath}
-                                                        </div>
-                                                        <div style={{ color: '#9ca3af', fontSize: '11px' }}>
-                                                            varName: {(edit as SpotColorEdit).newProps.varName || '(none)'} |
-                                                            text: {(edit as SpotColorEdit).newProps.text || '(none)'} |
-                                                            color: <span style={{ color: (edit as SpotColorEdit).newProps.color }}>{(edit as SpotColorEdit).newProps.color || '(none)'}</span>
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {edit.type === 'linkedHighlight' && (
-                                                    <>
-                                                        <div>📍 {(edit as LinkedHighlightEdit).blockId}</div>
-                                                        <div style={{ color: '#9ca3af' }}>
-                                                            🔗 Path: {(edit as LinkedHighlightEdit).elementPath}
-                                                        </div>
-                                                        <div style={{ color: '#9ca3af', fontSize: '11px' }}>
-                                                            varName: {(edit as LinkedHighlightEdit).newProps.varName || '(none)'} |
-                                                            highlightId: {(edit as LinkedHighlightEdit).newProps.highlightId || '(none)'} |
-                                                            text: {(edit as LinkedHighlightEdit).newProps.text || '(none)'}
                                                         </div>
                                                     </>
                                                 )}

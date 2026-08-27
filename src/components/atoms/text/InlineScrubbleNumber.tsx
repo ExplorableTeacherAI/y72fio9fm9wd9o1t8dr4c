@@ -315,7 +315,7 @@ export const InlineScrubbleNumber: React.FC<InlineScrubbleNumberProps> = ({
             elementPath = `scrubble-${blockId}-${varName ?? defaultValue}`;
         }
 
-        openScrubbleNumberEditor(
+        openScrubbleNumberEditor?.(
             {
                 varName: effectiveVarName,
                 defaultValue: effectiveDefaultValue,

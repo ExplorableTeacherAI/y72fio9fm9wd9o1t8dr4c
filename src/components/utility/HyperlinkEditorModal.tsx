@@ -15,6 +15,7 @@ export const HyperlinkEditorModal: React.FC = () => {
     const [targetBlockId, setTargetBlockId] = useState('');
     const [color, setColor] = useState('#10B981');
     const [bgColor, setBgColor] = useState('rgba(16, 185, 129, 0.15)');
+    const [error, setError] = useState<string | null>(null);
 
     const COLOR_PRESETS = COLOR_PRESETS_STANDARD;
 
@@ -27,10 +28,32 @@ export const HyperlinkEditorModal: React.FC = () => {
             setLinkType(editingHyperlink.href ? 'external' : 'block');
             setColor(editingHyperlink.color || '#10B981');
             setBgColor(editingHyperlink.bgColor || 'rgba(16, 185, 129, 0.15)');
+            setError(null);
         }
     }, [editingHyperlink]);
 
     const handleSave = useCallback(() => {
+        if (!text.trim()) {
+            setError('Link text is required.');
+            return;
+        }
+        if (linkType === 'external') {
+            if (!href.trim()) {
+                setError('URL is required.');
+                return;
+            }
+            try {
+                const url = new URL(href.trim());
+                if (!['http:', 'https:'].includes(url.protocol)) throw new Error('unsupported protocol');
+            } catch {
+                setError('Enter a valid URL beginning with http:// or https://.');
+                return;
+            }
+        } else if (!targetBlockId.trim()) {
+            setError('Target block ID is required.');
+            return;
+        }
+        setError(null);
         saveHyperlinkEdit({
             text: text || undefined,
             href: linkType === 'external' ? (href || undefined) : undefined,
@@ -62,7 +85,7 @@ export const HyperlinkEditorModal: React.FC = () => {
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
                     <h2 className="text-lg font-semibold flex items-center gap-2">
                         <Link className="w-5 h-5" style={{ color: '#10B981' }} />
-                        Edit Hyperlink
+                        {editingHyperlink?.isNew ? 'Add Hyperlink' : 'Edit Hyperlink'}
                     </h2>
                     <button
                         onClick={handleCancel}
@@ -216,6 +239,12 @@ export const HyperlinkEditorModal: React.FC = () => {
                         defaultOpacity={DEFAULT_BG_OPACITY}
                     />
 
+                    {error && (
+                        <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                            {error}
+                        </p>
+                    )}
+
                     {/* Preview */}
                     <div>
                         <label className="text-sm font-medium mb-2 block">Preview</label>
@@ -250,10 +279,13 @@ export const HyperlinkEditorModal: React.FC = () => {
                         Cancel
                     </button>
                     <button
-                        onClick={handleSave}
+                        onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleSave();
+                        }}
                         className={`px-4 py-2 text-sm font-medium bg-[${BRAND_GREEN}] text-white rounded-lg hover:bg-[${BRAND_GREEN}]/90 transition-colors`}
                     >
-                        Apply Changes
+                        {editingHyperlink?.isNew ? 'Add Component' : 'Apply Changes'}
                     </button>
                 </div>
             </div>

@@ -157,7 +157,7 @@ export const InlineToggle: React.FC<InlineToggleProps> = ({
             elementPath = `toggle-${blockId}-${varName ?? options.join(',')}`;
         }
 
-        openToggleEditor(
+        openToggleEditor?.(
             {
                 varName: effectiveVarName,
                 options: effectiveOptions,

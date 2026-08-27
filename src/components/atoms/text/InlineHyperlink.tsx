@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { encodeMarkerJson } from '@/lib/inlineMarkers';
 import { useEditing } from '@/contexts/EditingContext';
 import { useAppMode } from '@/contexts/AppModeContext';
 import { useBlockContext } from '@/contexts/BlockContext';
-import { useComponentHint, HintIcon } from './InlineInteractionHint';
 
 interface InlineHyperlinkProps {
     /** Unique identifier for this component instance */
@@ -19,8 +19,6 @@ interface InlineHyperlinkProps {
     color?: string;
     /** Optional background color on hover */
     bgColor?: string;
-    /** Whether to show interaction hint for first occurrence (default: true) */
-    showHint?: boolean;
 }
 
 /**
@@ -50,12 +48,11 @@ export const InlineHyperlink: React.FC<InlineHyperlinkProps> = ({
     targetBlockId,
     color = '#10B981',
     bgColor = 'rgba(16, 185, 129, 0.15)',
-    showHint = true,
 }) => {
     const containerRef = useRef<HTMLSpanElement>(null);
+    const inlineIdRef = useRef(id || `hyperlink-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`);
 
     // ── Interaction Hint System ──
-    const { hintVisible, dismissHint } = useComponentHint('hyperlink', { enabled: showHint });
 
     // Editing support
     const { isEditor } = useAppMode();
@@ -88,7 +85,7 @@ export const InlineHyperlink: React.FC<InlineHyperlinkProps> = ({
 
     useEffect(() => {
         if (blockIdFromContext) {
-            const elementPath = `hyperlink-${blockIdFromContext}-${identitySuffix}`;
+            const elementPath = `hyperlink-${blockIdFromContext}-${inlineIdRef.current}`;
             setEditIdentity({ blockId: blockIdFromContext, elementPath });
             return;
         }
@@ -96,7 +93,7 @@ export const InlineHyperlink: React.FC<InlineHyperlinkProps> = ({
 
         const block = containerRef.current.closest('[data-block-id]');
         const blockId = block?.getAttribute('data-block-id') || '';
-        const elementPath = `hyperlink-${blockId}-${identitySuffix}`;
+        const elementPath = `hyperlink-${blockId}-${inlineIdRef.current}`;
         setEditIdentity({ blockId, elementPath });
     }, [blockIdFromContext, identitySuffix]);
 
@@ -109,7 +106,9 @@ export const InlineHyperlink: React.FC<InlineHyperlinkProps> = ({
         const edit = [...pendingEdits].reverse().find(e =>
             e.type === 'hyperlink' &&
             (e as any).blockId === blockId &&
-            (e as any).elementPath === elementPath
+            ((e as any).componentId
+                ? (e as any).componentId === inlineIdRef.current
+                : (e as any).elementPath === elementPath)
         );
 
         return edit as { newProps: { text?: string; href?: string; targetBlockId?: string; color?: string; bgColor?: string } } | null;
@@ -132,7 +131,6 @@ export const InlineHyperlink: React.FC<InlineHyperlinkProps> = ({
     });
 
     // Stable ID and serialized props for round-trip extraction (base64 for HTML attribute safety)
-    const inlineIdRef = useRef(id || `hyperlink-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`);
     const componentProps = useMemo(() => {
         const textForProps = effectiveText ?? domTextRef.current;
         const json = JSON.stringify({
@@ -142,7 +140,7 @@ export const InlineHyperlink: React.FC<InlineHyperlinkProps> = ({
             color: effectiveColor,
             bgColor: effectiveBgColor,
         });
-        try { return btoa(json); } catch { return ''; }
+        try { return encodeMarkerJson(json); } catch { return ''; }
     }, [effectiveText, effectiveHref, effectiveTargetBlockId, effectiveColor, effectiveBgColor]);
 
     const handleEditClick = useCallback((e: React.MouseEvent) => {
@@ -155,7 +153,7 @@ export const InlineHyperlink: React.FC<InlineHyperlinkProps> = ({
         if (!elementPath) {
             const block = containerRef.current?.closest('[data-block-id]');
             blockId = blockId || block?.getAttribute('data-block-id') || '';
-            elementPath = `hyperlink-${blockId}-${identitySuffix}`;
+            elementPath = `hyperlink-${blockId}-${inlineIdRef.current}`;
         }
 
         const text = effectiveText ?? containerRef.current?.textContent?.trim();
@@ -167,6 +165,7 @@ export const InlineHyperlink: React.FC<InlineHyperlinkProps> = ({
                 targetBlockId: effectiveTargetBlockId,
                 color: effectiveColor,
                 bgColor: effectiveBgColor,
+                componentId: inlineIdRef.current,
             },
             blockId,
             elementPath
@@ -181,7 +180,6 @@ export const InlineHyperlink: React.FC<InlineHyperlinkProps> = ({
     };
 
     const handleClick = () => {
-        dismissHint(); // Dismiss interaction hint on first click
         if (effectiveHref) {
             window.open(effectiveHref, '_blank', 'noopener,noreferrer');
         } else if (effectiveTargetBlockId) {
@@ -274,7 +272,6 @@ export const InlineHyperlink: React.FC<InlineHyperlinkProps> = ({
             </motion.span>
 
             {/* Interaction Hint - shows for first instance only */}
-            <HintIcon type="hyperlink" visible={hintVisible} isEditing={isEditing} />
         </span>
     );
 };

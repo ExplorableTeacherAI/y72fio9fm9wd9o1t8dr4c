@@ -7,60 +7,6 @@ Content is organized as **blocks** inside **layouts**, with shared state via a *
 
 ---
 
-## CRITICAL: EVERY VISUALIZATION MUST BE INTERACTIVE
-
-**This is an explorable explanation platform — NOT a textbook.** Static diagrams defeat the entire purpose. Every visualization MUST allow student manipulation.
-
-### The Non-Negotiable Interactivity Rules
-
-| Rule | Description | Bad Example | Good Example |
-|:---|:---|:---|:---|
-| **1. No static charts** | Every chart/graph must have at least one manipulable element | `<Cartesian2D plots={[...]} />` with no movable points | `<Cartesian2D ... movablePoints={[...]} />` with bound variables |
-| **2. Bi-directional binding** | Prose ↔ Formula ↔ Visual must ALL sync via shared variables | Scrubbing text doesn't update the chart | `varName="radius"` used in `InlineScrubbleNumber`, `FormulaBlock \scrub{}`, AND `Cartesian2D` |
-| **3. Linked highlights** | Hovering prose terms highlights visual elements and vice versa | No visual connection between explanation and diagram | `InlineLinkedHighlight` connects "radius" text to the radius line in the diagram |
-| **4. Observable change** | When user manipulates, they see real-time consequences | User drags a point but nothing else changes | Dragging the radius updates the area value in both formula and prose |
-
-### Before Creating Any Visualization, Ask:
-
-1. **What can the student drag, scrub, or click?** ← If nothing, STOP and redesign
-2. **What changes when they interact?** ← At least one derived value must update
-3. **Is the same variable used in prose, formula, AND visual?** ← If not, connect them
-4. **Can hovering prose highlight the visual element?** ← Add `InlineLinkedHighlight` if not
-
-### Quick Interactivity Checklist
-
-- [ ] `Cartesian2D` has `movablePoints` OR is bound to `InlineScrubbleNumber` variables
-- [ ] `DataVisualization` has interactive data series OR brush selection
-- [ ] `FormulaBlock` uses `\scrub{}` for key variables
-- [ ] Prose uses `InlineScrubbleNumber` for the SAME variables as the visual
-- [ ] At least one `InlineLinkedHighlight` connects prose to visual elements
-- [ ] Derived values (area, sum, etc.) display via `readonly` scrubble numbers
-- [ ] **Every visualization with actual in-viz interactivity has an `InteractionHintSequence`** — but NEVER add hints if the visualization isn't truly interactive
-
-### Use Soft, Muted Colors Only
-
-**Never use saturated primaries like `#FF0000`, `#00FF00`, `#0000FF`.** Always use the recommended palette:
-
-| Purpose | Color | Hex |
-|:---|:---|:---|
-| Primary variables | Soft Teal | `#62D0AD` |
-| Secondary variables | Soft Indigo | `#8E90F5` |
-| Highlights/Attention | Warm Amber | `#F7B23B` |
-| Tertiary variables | Soft Violet | `#AC8BF9` |
-| Emphasis | Soft Rose | `#F8A0CD` |
-| Alternative primary | Soft Sky | `#62CCF9` |
-| Warmth | Soft Coral | `#F4A89A` |
-| Natural concepts | Soft Sage | `#A8D5A2` |
-| Gentle highlights | Soft Peach | `#FFCBA4` |
-| Fresh/Clean | Soft Mint | `#7DD3C0` |
-| Subtle emphasis | Soft Lavender | `#C9B8E8` |
-| Success/Correct | Soft Green | `#22c55e` |
-| Error (use sparingly) | Soft Red | `#ef4444` |
-
-**For backgrounds:** Use RGBA with 15% opacity (e.g., `rgba(98, 208, 173, 0.15)` for teal highlight).
-
----
-
 ## Files You MUST Edit (lesson content goes here)
 
 | File | Purpose |
@@ -73,8 +19,6 @@ Content is organized as **blocks** inside **layouts**, with shared state via a *
 
 | File | Purpose |
 |------|---------|
-| `src/data/exampleBlocks.tsx` | **Reference only** — shows how to use every layout, component, and pattern. Copy patterns into `blocks.tsx`. |
-| `src/data/exampleVariables.ts` | **Reference only** — shows how to define every variable type. Copy structure into `variables.ts`. |
 | `src/stores/variableStore.ts` | Zustand store implementation (do not edit) |
 
 ---
@@ -90,12 +34,6 @@ import {
     variableDefinitions,
     getDefaultValues,
     getVariableInfo,
-    numberPropsFromDefinition,
-    clozePropsFromDefinition,
-    choicePropsFromDefinition,
-    togglePropsFromDefinition,
-    spotColorPropsFromDefinition,
-    linkedHighlightPropsFromDefinition,
 } from "./variables";
 useVariableStore.getState().initialize(getDefaultValues());
 initializeVariableColors(variableDefinitions);
@@ -103,31 +41,9 @@ initializeVariableColors(variableDefinitions);
 
 ---
 
-## Helper Functions Quick Reference
-
-| Component | Helper Function | Variable Type |
-|-----------|----------------|---------------|
-| `InlineScrubbleNumber` | `numberPropsFromDefinition(getVariableInfo('varName'))` | `number` |
-| `InlineClozeInput` | `clozePropsFromDefinition(getVariableInfo('varName'))` | `text` |
-| `InlineClozeChoice` | `choicePropsFromDefinition(getVariableInfo('varName'))` | `select` |
-| `InlineToggle` | `togglePropsFromDefinition(getVariableInfo('varName'))` | `select` |
-| `InlineSpotColor` | `spotColorPropsFromDefinition(getVariableInfo('varName'))` | any (uses `color`) |
-| `InlineLinkedHighlight` | `linkedHighlightPropsFromDefinition(getVariableInfo('varName'))` | any (uses `color`, `bgColor`) |
-
-**Usage pattern:**
-
-```tsx
-<ComponentName
-    varName="myVar"
-    {...helperFunction(getVariableInfo('myVar'))}
-/>
-```
-
----
-
 ## Critical Rule: Global Variables
 
-**NEVER pass inline numeric props to any interactive component (eg., `InlineScrubbleNumber`).** Always define variables in the central variables file first, then reference them. This way we can reuse the variables in any place easily. 
+**NEVER pass numeric props inline to a component that reads the variable store.** Always define variables in the central variables file first, then reference them by name.
 
 ### Two-Step Workflow
 
@@ -149,225 +65,37 @@ export const variableDefinitions: Record<string, VariableDefinition> = {
 };
 ```
 
-(See `src/data/exampleVariables.ts` for reference on how to define different variable types.)
-
-#### Step 2: Use the variable in `src/data/blocks.tsx`
+#### Step 2: Read the variable in a component
 
 ```tsx
-<InlineScrubbleNumber
-    varName="amplitude"
-    {...numberPropsFromDefinition(getVariableInfo('amplitude'))}
-/>
-```
-
-### What NOT to do
-
-```tsx
-// WRONG — never hardcode numeric props inline
-<InlineScrubbleNumber
-    varName="amplitude"
-    defaultValue={1}
-    min={0}
-    max={10}
-    step={0.1}
-/>
-
-// CORRECT — always use the centralized variable definition
-<InlineScrubbleNumber
-    varName="amplitude"
-    {...numberPropsFromDefinition(getVariableInfo('amplitude'))}
-/>
-```
-
-### Reading/Writing Variables in Components
-
-```tsx
-// Read a variable (reactive — auto-updates on change):
 import { useVar } from '@/stores';
-const amplitude = useVar('amplitude', 1);
+const amplitude = useVar('amplitude', 1); // reactive — re-renders on change
+```
 
-// Write a variable:
+### Writing Variables in Components
+
+```tsx
 import { useSetVar } from '@/stores';
 const setVar = useSetVar();
 setVar('amplitude', 2.5);
 ```
 
-### Adding a `formatValue` Prop
-
-`formatValue` is the only prop that can be added inline alongside the spread:
-
-```tsx
-<InlineScrubbleNumber
-    varName="temperature"
-    {...numberPropsFromDefinition(getVariableInfo('temperature'))}
-    formatValue={(v) => `${v}°C`}
-/>
-```
-
-## Critical Rule: InlineClozeInput (Fill-in-the-Blank)
-
-**NEVER pass inline props directly to `InlineClozeInput`.** Always define the variable in the central variables file first, then reference it — same pattern as `InlineScrubbleNumber`.
-
-> **Submission timing**: `InlineClozeInput` does NOT update the variable store while the student is typing. The store is only written when the student **submits**: by pressing **Enter**, **clicking away** (blur), or when the typed text **auto-matches** the correct answer. This is important because `InlineFeedback` watches the store — feedback only appears after submission, not during typing.
-
-### Two-Step Workflow for Cloze Inputs
-
-#### Step 1: Define the variable in `src/data/variables.ts`
-
-```ts
-quarterCircleAngle: {
-    defaultValue: '',
-    type: 'text',
-    label: 'Quarter Circle Angle',
-    description: 'Student answer for the quarter circle angle question',
-    placeholder: '???',
-    correctAnswer: '90',
-    color: '#3B82F6',
-},
-```
-
-#### Step 2: Use the variable in `src/data/blocks.tsx`
-
-```tsx
-<InlineClozeInput
-    varName="quarterCircleAngle"
-    correctAnswer="90"
-    {...clozePropsFromDefinition(getVariableInfo('quarterCircleAngle'))}
-/>
-```
-
-### Key Cloze Variable Fields
-
-| Field | Purpose |
-|-------|---------|
-| `correctAnswer` | The expected answer string (not stored in variable store — stays as a prop) |
-| `caseSensitive` | Whether matching is case sensitive (default: `false`) |
-| `placeholder` | Button text shown before student types (default: `"???"`) |
-| `color` | Text/border color |
-| `bgColor` | Background color (supports RGBA) |
-
-## Critical Rule: InlineClozeChoice (Dropdown Fill-in-the-Blank)
-
-**NEVER pass inline props directly to `InlineClozeChoice`.** Always define the variable in the central variables file first, then reference it.
-
-### Two-Step Workflow for Cloze Choices
-
-#### Step 1: Define the variable in `src/data/variables.ts`
-
-```ts
-shapeAnswer: {
-    defaultValue: '',
-    type: 'select',
-    label: 'Shape Answer',
-    description: 'Student answer for the 2D shape question',
-    placeholder: '???',
-    correctAnswer: 'circle',
-    options: ['cube', 'circle', 'square', 'triangle'],
-    color: '#D81B60',
-},
-```
-
-#### Step 2: Use the variable in `src/data/blocks.tsx`
-
-```tsx
-<InlineClozeChoice
-    varName="shapeAnswer"
-    correctAnswer="circle"
-    options={["cube", "circle", "square", "triangle"]}
-    {...choicePropsFromDefinition(getVariableInfo('shapeAnswer'))}
-/>
-```
-
-## Critical Rule: InlineToggle (Click to Cycle)
-
-**NEVER pass inline props directly to `InlineToggle`.** Always define the variable in the central variables file first.
-
-### Two-Step Workflow for Toggles
-
-#### Step 1: Define the variable in `src/data/variables.ts`
-
-```ts
-currentShape: {
-    defaultValue: 'triangle',
-    type: 'select',
-    label: 'Current Shape',
-    description: 'The currently selected polygon shape',
-    options: ['triangle', 'square', 'pentagon', 'hexagon'],
-    color: '#D946EF',
-},
-```
-
-#### Step 2: Use the variable in `src/data/blocks.tsx`
-
-```tsx
-// Reactive text component returning different strings based on the toggle value
-function ReactiveToggleShapeText() {
-    const shape = useVar('currentShape', 'triangle') as string;
-    if (shape === 'square') return <span>has 4 equal sides and interior angles of 90°</span>;
-    if (shape === 'pentagon') return <span>has 5 equal sides and interior angles of 108°</span>;
-    if (shape === 'hexagon') return <span>has 6 equal sides and interior angles of 120°</span>;
-    return <span>has 3 equal sides and interior angles of 60°</span>;
-}
-
-<EditableParagraph id="para-toggle-shapes" blockId="paragraph-toggle-shapes">
-    By changing the number of sides, we can define different regular polygons. For example, a regular{" "}
-    <InlineToggle
-        id="toggle-current-shape"
-        varName="currentShape"
-        options={["triangle", "square", "pentagon", "hexagon"]}
-        {...togglePropsFromDefinition(getVariableInfo('currentShape'))}
-    />
-    {" "}<ReactiveToggleShapeText />. Click the shape name to cycle through other options and see its properties change.
-</EditableParagraph>
-```
-
-## InlineTooltip (Hover Tooltip)
-
-`InlineTooltip` shows a tooltip/definition on hover. Does **NOT** use the variable store — purely informational. No `varName` prop needed.
-
-```tsx
-<EditableParagraph id="para-tooltip-circle" blockId="paragraph-tooltip-circle">
-    In geometry, measuring a{" "}
-    <InlineTooltip id="tooltip-circle-def" tooltip="A perfect 2D shape where every point on the boundary is identically distanced from the center.">
-        circle
-    </InlineTooltip>
-    {" "}requires understanding its core properties. The most fundamental of these is the{" "}
-    <InlineTooltip id="tooltip-radius-def" tooltip="The straight-line distance from the exact center of a circle to any point on its boundary.">
-        radius
-    </InlineTooltip>
-    , which acts as the building block for all other circular formulas.
-</EditableParagraph>
-```
-
-| Prop | Type | Default | Purpose |
-|------|------|---------|---------|
-| `children` | `ReactNode` | *(required)* | The trigger text displayed inline |
-| `tooltip` | `string` | *(required)* | The tooltip content shown on hover |
-| `color` | `string` | `#F59E0B` | Text color (amber) |
-| `bgColor` | `string` | `rgba(245, 158, 11, 0.15)` | Background color on hover |
-| `position` | `string` | `'auto'` | Tooltip position: `'auto'`, `'top'`, `'bottom'` |
-| `maxWidth` | `number` | `400` | Maximum tooltip width in pixels |
-
 ## InlineFormula (Inline Math)
 
-`InlineFormula` renders a KaTeX math formula inline within paragraph text, with optional colored variables using `\clr{name}{content}` syntax. Does **NOT** use the variable store.
+`InlineFormula` renders a static KaTeX formula inline within paragraph text. It has no interaction and does not use the variable store.
 
 ```tsx
 <EditableParagraph id="para-formula-area" blockId="formula-circle-area">
-    For example, the total 2D space encapsulated by a boundary is measured as the{" "}
-    <InlineFormula
-        latex="\clr{area}{A} = \clr{pi}{\pi} \clr{radius}{r}^2"
-        colorMap={{ area: '#ef4444', pi: '#3b82f6', radius: '#3cc499' }}
-    />
-    . Here, the term <InlineFormula latex="\clr{radius}{r}" colorMap={{radius: '#3cc499'}} /> explicitly represents the radius.
+    The area of a circle is <InlineFormula latex="A = \pi r^2" />, where{" "}
+    <InlineFormula latex="r" /> is the radius.
 </EditableParagraph>
 ```
 
 | Prop | Type | Default | Purpose |
 |------|------|---------|---------|
 | `latex` | `string` | *(required)* | LaTeX formula string — use single `\` for commands (see escaping rule below) |
-| `colorMap` | `Record<string, string>` | `{}` | Term name → hex color mapping for `\clr{}{}` |
-| `color` | `string` | `#8B5CF6` | Wrapper accent color (violet) |
+
+`FormulaBlock` (import from `@/components/molecules`) renders the same kind of static formula as a centred, display-size block: `<FormulaBlock latex="F = m \times a" />`.
 
 ### Critical Rule: LaTeX Escaping in JSX String Attributes
 
@@ -377,52 +105,44 @@ In JSX string attributes (`latex="..."`), a single backslash is passed through l
 
 ```tsx
 // WRONG — double backslash produces "\\sin" which KaTeX cannot parse
-<InlineFormula latex="y = A\\sin(\\omega x + \\phi)" colorMap={{}} />
+<InlineFormula latex="y = A\\sin(\\omega x + \\phi)" />
 
 // CORRECT — single backslash produces "\sin" which KaTeX renders properly
-<InlineFormula latex="y = A\sin(\omega x + \phi)" colorMap={{}} />
+<InlineFormula latex="y = A\sin(\omega x + \phi)" />
 ```
 
-This applies to **all** LaTeX commands: `\sin`, `\cos`, `\omega`, `\pi`, `\phi`, `\alpha`, `\frac`, `\sqrt`, `\sum`, `\int`, `\clr`, etc.
+This applies to **all** LaTeX commands: `\sin`, `\cos`, `\omega`, `\pi`, `\phi`, `\alpha`, `\frac`, `\sqrt`, `\sum`, `\int`, etc.
+
+### Critical Rule: ASCII-Only LaTeX — Never Paste Unicode Math Characters
+
+**LaTeX strings must contain ONLY ASCII characters.** KaTeX has no glyphs for
+precomposed accented Unicode (`î`, `ĵ`, `â`, …) — they render as missing-glyph
+boxes in the lesson. Always write the LaTeX command form:
+
+```tsx
+// WRONG — Unicode î/ĵ render as broken boxes
+<InlineFormula latex="a\,î + b\,ĵ + c\,k̂" />
+
+// CORRECT — LaTeX accent commands with dotless \imath/\jmath
+<InlineFormula latex="a\hat{\imath} + b\hat{\jmath} + c\hat{k}" />
+```
+
+| Never type | Write instead |
+|:---|:---|
+| `î`, `ĵ`, `k̂` | `\hat{\imath}`, `\hat{\jmath}`, `\hat{k}` |
+| `π`, `θ`, `ω` | `\pi`, `\theta`, `\omega` |
+| `×`, `·`, `≤`, `≥`, `≠` | `\times`, `\cdot`, `\le`, `\ge`, `\ne` |
+| `°` | `^\circ` |
+| `→`, `⇒` | `\to`, `\Rightarrow` |
+
+(Unicode is fine in prose text — this rule is only for `latex="..."` strings.)
 
 **Same rule for `FormulaBlock`:**
 
 ```tsx
 // CORRECT
-<FormulaBlock latex="\clr{force}{F} = \scrub{mass} \times \scrub{acceleration}" ... />
+<FormulaBlock latex="F = m \times a" />
 ```
-
-## InlineTrigger (Click to Snap Value)
-
-`InlineTrigger` is a clickable inline element that **snaps a global variable to a specific value** on click. Belongs to the connective category (emerald `#10B981`).
-
-```tsx
-<EditableParagraph id="para-trigger-example" blockId="trigger-example">
-    Try dragging the simulation speed to a custom value:{" "}
-    <InlineScrubbleNumber varName="speed" ... />.
-    Once you lose track of the original pace, you can easily{" "}
-    <InlineTrigger varName="speed" value={1} icon="refresh">
-        restore the default speed
-    </InlineTrigger>{" "}
-    or instantly{" "}
-    <InlineTrigger varName="speed" value={5} icon="zap">
-        maximize the velocity
-    </InlineTrigger>{" "}
-    with a single click.
-</EditableParagraph>
-```
-
-| Prop | Type | Default | Purpose |
-|------|------|---------|---------|
-| `children` | `ReactNode` | *(required)* | The clickable text displayed inline |
-| `varName` | `string` | `undefined` | Variable to snap on click |
-| `value` | `string \| number \| boolean` | `undefined` | Value to snap the variable to |
-| `color` | `string` | `#10B981` | Text color (emerald) |
-| `bgColor` | `string` | `rgba(16, 185, 129, 0.15)` | Background color on hover |
-| `icon` | `string` | `undefined` | Icon after text: `'play'`, `'refresh'`, `'zap'`, `'none'` |
-| `onTrigger` | `() => void` | `undefined` | Optional callback after click (not serializable) |
-
-**Note:** `InlineTrigger` does not need a variable definition in `variables.ts` — it only *writes* to the store. The `varName` should reference a variable already defined for another component.
 
 ## InlineHyperlink (Click to Navigate)
 
@@ -452,105 +172,14 @@ This applies to **all** LaTeX commands: `\sin`, `\cos`, `\omega`, `\pi`, `\phi`,
 
 **Click behavior:** `href` → opens URL in new tab; `targetBlockId` → smooth scrolls; both set → `href` takes priority.
 
-## Inline Interaction Hints (`showHint` prop)
-
-All interactive inline components (`InlineScrubbleNumber`, `InlineToggle`, `InlineTrigger`, `InlineHyperlink`, `InlineClozeInput`, `InlineClozeChoice`, `InlineLinkedHighlight`, `InlineTooltip`) support a **`showHint`** prop that displays an animated gesture icon below the component to teach students how to interact with it.
-
-**FormulaBlock** also supports interaction hints for all its interactive elements (`\scrub{}`, `\highlight{}`, `\cloze{}`, and `\choice{}`). Hints appear below **each** interactive element in the formula — not just one. Each hint auto-dismisses when the user interacts with the corresponding element (drag a scrubble, hover a highlight, focus a cloze input, or click a choice).
-
-Hints are automatically managed:
-- Only the **first instance** of each component type on the page shows a hint
-- The hint **auto-dismisses** when the user interacts with the component
-- Dismissal is remembered in **sessionStorage** for the session
-
-**Props:**
-
-| Prop | Type | Default | Purpose |
-|------|------|---------|--------|
-| `showHint` | `boolean` | `true` | Enable/disable the interaction hint for this component |
-
-**Usage — Disable hints for navigation components:**
-
-```tsx
-// Table of contents links — hints disabled
-<InlineHyperlink id="link-toc-intro" showHint={false} targetBlockId="heading-intro">Introduction</InlineHyperlink>
-<InlineHyperlink id="link-toc-circles" showHint={false} targetBlockId="heading-circles">Circles</InlineHyperlink>
-
-// Content links — hints enabled (default)
-<InlineHyperlink id="link-wikipedia" href="https://en.wikipedia.org/wiki/Circle">Wikipedia article</InlineHyperlink>
-
-// FormulaBlock — hints enabled by default
-<FormulaBlock 
-    latex="\\scrub{mass} \\times \\scrub{acceleration}"
-    showHint={true}  // default
-/>
-```
-
-**When to disable hints:**
-- Table of contents / navigation links (use `showHint={false}`)
-- Repeated instances of the same component type
-- When hints would be redundant or distracting
-
-**For building custom components** — use the `useComponentHint` hook and `HintIcon` component:
-
-```tsx
-import { useComponentHint, HintIcon } from './InlineInteractionHint';
-
-function MyInlineComponent({ showHint = true }) {
-    const { hintVisible, dismissHint } = useComponentHint('my-component-type', { enabled: showHint });
-
-    const handleClick = () => {
-        dismissHint(); // Dismiss hint on interaction
-        // ... rest of handler
-    };
-
-    return (
-        <span onClick={handleClick}>
-            Content
-            <HintIcon type="my-component-type" visible={hintVisible} isEditing={false} />
-        </span>
-    );
-}
-```
-
-## InlineSpotColor (Color-Coded Variables)
-
-`InlineSpotColor` highlights a word with the exact same color defined for a variable. When that identical variable appears in a mathematical formula, the colors align completely — establishing a powerful, subconscious visual link between prose and math.
-
-```tsx
-<EditableParagraph id="para-spotcolor" blockId="spotcolor">
-    For instance, by multiplying the{" "}
-    <InlineSpotColor varName="base" color="#a855f7">
-        base
-    </InlineSpotColor>
-    {" "}of a triangle by its perpendicular{" "}
-    <InlineSpotColor varName="height" color="#f97316">
-        height
-    </InlineSpotColor>
-    , you can easily compute its total geometric area:{" "}
-    <InlineFormula
-        latex="Area = \frac{1}{2} \clr{base}{b} \clr{height}{h}"
-        colorMap={{ base: '#a855f7', height: '#f97316' }}
-    />.
-</EditableParagraph>
-```
-
-| Prop | Type | Default | Purpose |
-|------|------|---------|---------|
-| `children` | `ReactNode` | *(required)* | Text content to color |
-| `varName` | `string` | *(required)* | Variable key to lookup the color for |
-| `color` | `string` | *(required)* | The hex color for this variable (usually via store) |
-
 ## Variable Types
 
 | Type | Example Definition |
 |------|--------------------|
 | `number` | `{ defaultValue: 5, type: 'number', min: 0, max: 10, step: 1 }` |
 | `text` | `{ defaultValue: 'Hello', type: 'text', placeholder: 'Enter...' }` |
-| `text` (cloze) | `{ defaultValue: '', type: 'text', correctAnswer: '90', placeholder: '???', color: '#3B82F6' }` |
 | `select` | `{ defaultValue: 'sine', type: 'select', options: ['sine', 'cosine'] }` |
-| `select` (cloze choice) | `{ defaultValue: '', type: 'select', correctAnswer: 'circle', options: ['cube', 'circle'], placeholder: '???', color: '#D81B60' }` |
-| `select` (toggle) | `{ defaultValue: 'triangle', type: 'select', options: ['triangle', 'square', 'pentagon'], color: '#D946EF' }` |
+| `select` | `{ defaultValue: 'triangle', type: 'select', options: ['triangle', 'square', 'pentagon'], color: '#D946EF' }` |
 | `boolean` | `{ defaultValue: true, type: 'boolean' }` |
 | `array` | `{ defaultValue: [1, 2, 3], type: 'array' }` |
 | `object` | `{ defaultValue: { x: 0, y: 0 }, type: 'object', schema: '{ x: number, y: number }' }` |
@@ -563,12 +192,7 @@ Every block must be wrapped in a `Layout` > `Block` hierarchy:
 <StackLayout key="layout-unique-key" maxWidth="xl">
     <Block id="intro-title" padding="sm">
         <EditableParagraph id="para-unique-id" blockId="intro-title">
-            Content here with{" "}
-            <InlineScrubbleNumber
-                varName="myVar"
-                {...numberPropsFromDefinition(getVariableInfo('myVar'))}
-            />
-            {" "}inline.
+            Content here.
         </EditableParagraph>
     </Block>
 </StackLayout>
@@ -608,7 +232,7 @@ Every block must be wrapped in a `Layout` > `Block` hierarchy:
 </StackLayout>
 ```
 
-**Exception:** Inline components (`InlineScrubbleNumber`, `InlineClozeInput`, `InlineTooltip`, etc.) belong *inside* their parent `EditableParagraph`.
+**Exception:** Inline components (`InlineHyperlink`, `InlineFormula`) belong *inside* their parent `EditableParagraph`.
 
 ### Critical Rule: Hierarchical ID Naming Convention
 
@@ -616,7 +240,7 @@ Every block, layout, and component MUST have a **unique, descriptive, hierarchic
 
 **New Stricter ID Format Rules:**
 - **No generic wrappers**: NEVER use the words "block", "container", "item", or similar generic terms in IDs. (e.g., `intro-title` instead of `block-intro-title`).
-- **No arbitrary numbers**: NEVER use arbitrary numbering like `-01`, `-02`, `-03`. IDs must be contextually meaningful based on their content (e.g., `paragraph-cloze-angle` instead of `paragraph-cloze-01`).
+- **No arbitrary numbers**: NEVER use arbitrary numbering like `-01`, `-02`, `-03`. IDs must be contextually meaningful based on their content (e.g., `paragraph-circle-area` instead of `paragraph-01`).
 - **No abbreviations or short forms**: NEVER use cryptic abbreviations or short forms in any ID (block IDs, paragraph IDs, variable names, etc.). IDs must be immediately understandable. Examples of **bad** IDs: `bcircle`, `c2d`, `mt`, `vid`, `btn`, `para-qc`. Examples of **good** IDs: `block-circle`, `cartesian-2d`, `math-tree`, `video`, `button`, `para-quarter-circle`. If in doubt, spell it out.
 
 | Element | Pattern | Example |
@@ -667,20 +291,6 @@ Every block, layout, and component MUST have a **unique, descriptive, hierarchic
 </StackLayout>
 ```
 
-### Critical Rule: Descriptive Phrasing for Interactions
-
-**NEVER use command-style phrasing like "set to", "increase to", or "change to" when referencing inline interactive components.**
-
-Because inline components (e.g., `InlineScrubbleNumber`) display real-time reactive values, instructions like "increase the amplitude to 2" will not make sense since the user has already changed the value to 2.
-
-**Use exploratory, state-based, or descriptive language instead:**
-- **WRONG**: "Set the amplitude to 3 to see what happens."
-- **CORRECT**: "If the amplitude is 3, what happens?"
-- **WRONG**: "Increase the frequency to 5."
-- **CORRECT**: "When the frequency is 5, the graph changes in this way..."
-
-For `InlineTrigger`, avoid verbs like "set" or "change". Use verbs like "snap to", "reset", or state the action contextually.
-
 ### Critical Rule: `hasVisualization` Prop
 
 When a `<Block>` contains a **visual component** (chart, diagram, interactive visualization), you **MUST** set `hasVisualization={true}`. This enables a magic wand icon on hover that lets the teacher request AI-generated alternative visualizations.
@@ -717,288 +327,6 @@ When a `<Block>` contains a **visual component** (chart, diagram, interactive vi
 </Block>
 ```
 
-### Critical Rule: `InteractionHintSequence` for Interactive Visualizations
-
-**Every interactive visualization MUST include an `InteractionHintSequence` overlay** to show students how to interact with it. The hint displays an animated hand gesture (drag, click, hover, scroll) that auto-dismisses when the user interacts with the visualization and remembers via sessionStorage so students only see it once per session.
-
-**This is NOT optional.** Visualizations without interaction hints are incomplete and fail to guide students on how to explore them.
-
-**CRITICAL: Only add hints for ACTUAL interactivity.** Before adding an `InteractionHintSequence`, verify that the visualization has real, working interactive elements (movable points, draggable handles, clickable areas, etc.). **NEVER add interaction hints to a visualization that is not actually interactive.** Showing a "drag here" hint on a static visualization creates frustration and confusion. If your visualization has no interactive elements implemented, do NOT add any hints — instead, redesign the visualization to include actual interactivity first.
-
-**Usage:** Wrap the visualization in a `<div className="relative">` and place `InteractionHintSequence` as a sibling:
-
-```tsx
-function MyInteractiveViz() {
-    return (
-        <div className="relative">
-            <Cartesian2D
-                movablePoints={[{ initial: [1, 0], color: "#ef4444" }]}
-                ...
-            />
-            <InteractionHintSequence
-                hintKey="my-viz-drag"
-                steps={[{ gesture: "drag", label: "Drag the red point", position: { x: "65%", y: "35%" } }]}
-            />
-        </div>
-    );
-}
-```
-
-**For multi-step tutorials** (e.g., line drawing canvas):
-
-```tsx
-<InteractionHintSequence
-    hintKey="line-drawing-tutorial"
-    currentStep={points.length >= 3 ? 3 : points.length}
-    steps={[
-        { gesture: "click", label: "Click to place a point", position: { x: "45%", y: "45%" } },
-        { gesture: "click", label: "Click again to draw a line", position: { x: "55%", y: "35%" } },
-        { gesture: "click", label: "Keep clicking to continue", position: { x: "35%", y: "55%" } },
-    ]}
-/>
-```
-
-**Props:**
-
-| Prop | Type | Default | Purpose |
-|------|------|---------|---------|
-| `hintKey` | `string` | *(required)* | Unique sessionStorage key — use `kebab-case` matching the viz purpose |
-| `steps` | `HintStep[]` | *(required)* | Array of hint steps, each with gesture, label, position, and optional color |
-| `currentStep` | `number` | auto | Controlled mode: parent tells which step to show |
-| `delay` | `number` | `800` | Delay in ms before the hint appears after mount |
-| `color` | `string` | `#62D0AD` | Default accent color for the hand icon |
-| `alwaysShow` | `boolean` | `false` | Ignores sessionStorage (for demos/documentation) |
-
-**HintStep properties:**
-
-| Property | Type | Purpose |
-|------|------|---------|
-| `gesture` | `GestureType` | Animation type: `"drag"`, `"drag-horizontal"`, `"drag-vertical"`, `"drag-circular"`, `"click"`, `"hover"`, `"scroll"`, `"pinch"`, `"rotate"`, `"orbit-3d"` |
-| `label` | `string` | Short instruction text shown below the icon |
-| `position` | `{ x?: string; y?: string }` | Position relative to the parent container (CSS percentages) |
-| `color` | `string` | Optional accent color override for this step |
-| `dragPath` | `DragPathConfig` | **Custom drag path for intuitive animations** (see below) |
-
-#### Custom Drag Path (`dragPath`) — Intuitive Hint Animations
-
-**Use `dragPath` to make the hint animation follow the ACTUAL drag motion.** Without this, `drag-circular` just rotates in place. With `dragPath`, the hand icon traces the curved path the student should drag.
-
-**Path types:**
-
-| Type | Use When | Properties |
-|:---|:---|:---|
-| `"arc"` | Point on a circle, angle control | `startAngle`, `endAngle` (degrees), `radius` (px) |
-| `"line"` | Slider, straight drag | `startOffset: {x, y}`, `endOffset: {x, y}` (px) |
-| `"custom"` | Complex paths | `xKeyframes: number[]`, `yKeyframes: number[]` |
-
-**Arc path — for circular motion (COMMON):**
-```tsx
-// Unit circle: drag point from right (0°) upward to top (-90° / 270°)
-{ 
-  gesture: "drag-circular", 
-  label: "Drag around the circle",
-  dragPath: { type: "arc", startAngle: 0, endAngle: -90, radius: 40 }
-}
-
-// Angle control sweeping from 30° to 120°
-{ 
-  gesture: "drag-circular", 
-  label: "Adjust the angle",
-  dragPath: { type: "arc", startAngle: 30, endAngle: 120, radius: 35 }
-}
-```
-
-**Angle reference (screen coordinates):**
-- `0°` = right (3 o'clock position)
-- `90°` = down (6 o'clock)
-- `180°` = left (9 o'clock)
-- `270°` or `-90°` = up (12 o'clock)
-- Use **negative angles** for counterclockwise (e.g., 0 → -90 drags upward on the right)
-
-**Line path — for straight drags:**
-```tsx
-// Horizontal slider
-{ 
-  gesture: "drag-horizontal", 
-  label: "Drag left and right",
-  dragPath: { type: "line", startOffset: { x: -30, y: 0 }, endOffset: { x: 30, y: 0 } }
-}
-
-// Diagonal drag
-{ 
-  gesture: "drag", 
-  label: "Drag diagonally",
-  dragPath: { type: "line", startOffset: { x: -25, y: 15 }, endOffset: { x: 25, y: -15 } }
-}
-```
-
-**Gesture selection guide — CHOOSE THE CORRECT GESTURE:**
-
-| Use Case | Gesture | Icon | Description |
-|:---|:---|:---|:---|
-| Free-form point dragging | `"drag"` | Hand | General drag in any direction |
-| Horizontal slider/scrubbler | `"drag-horizontal"` | ↔ Arrows | Constrained left-right motion |
-| Vertical slider/adjuster | `"drag-vertical"` | ↕ Arrows | Constrained up-down motion |
-| Point on circle circumference | `"drag-circular"` | Circular arrow | Drag around a circular path |
-| Angle adjustment handles | `"drag-circular"` | Circular arrow | Rotate around a center point |
-| Click to place/toggle | `"click"` | Click pointer | Single tap/click interaction |
-| Hover to reveal tooltips | `"hover"` | Pointer | Mouse-over interaction |
-| Scroll through content | `"scroll"` | Up-down arrows | Scroll wheel interaction |
-| 3D camera orbit controls | `"orbit-3d"` | 3D cube | Drag to rotate 3D view |
-| Rotate an object | `"rotate"` | Rotate arrow | Rotation gestures |
-| Zoom in/out | `"pinch"` | Expand arrows | Pinch or zoom gestures |
-
-**Examples for common visualization types:**
-
-```tsx
-// Point on a circle (BEST: use dragPath for intuitive arc motion)
-{ 
-  gesture: "drag-circular", 
-  label: "Drag the point around the circle",
-  dragPath: { type: "arc", startAngle: 0, endAngle: 90, radius: 40 }
-}
-
-// Unit circle angle control (drag upward from right side)
-{
-  gesture: "drag-circular",
-  label: "Drag to change the angle",
-  position: { x: "80%", y: "50%" }, // Position near the point on the right
-  dragPath: { type: "arc", startAngle: 0, endAngle: -90, radius: 35 }
-}
-
-// Horizontal slider (e.g., time slider, x-axis value)
-{ gesture: "drag-horizontal", label: "Drag to change the value" }
-
-// 3D surface or model
-{ gesture: "orbit-3d", label: "Drag to rotate the view" }
-
-// Triangle vertex dragging
-{ gesture: "drag", label: "Drag any vertex to reshape" }
-
-// Click to place points
-{ gesture: "click", label: "Click to place a point" }
-
-// Angle rotation handle (with custom arc)
-{ 
-  gesture: "drag-circular", 
-  label: "Drag to adjust the angle",
-  dragPath: { type: "arc", startAngle: 30, endAngle: 150, radius: 30 }
-}
-```
-
-**Rules:**
-1. `hintKey` must be **unique across the entire lesson** — never reuse a key
-2. Position the hint **near the interactive element**, not at the center of the viz
-3. **Use `dragPath` for circular interactions** — it makes the hint follow the actual drag path
-4. For 3D visualizations, use `gesture="orbit-3d"` with label "Drag to rotate the view"
-5. The label should be **descriptive and specific** — "Drag the red point" not just "Drag"
-6. **NEVER ship a visualization without an InteractionHintSequence** — this is a hard requirement
-
-#### Positioning the Hint
-
-The `position` prop uses CSS percentages. The hint icon is **centered on the specified point**.
-
-For **centered math visualizations** (Mafs, etc. where origin is at center):
-- `x: "50%", y: "50%"` = center of visualization (corresponds to mathematical origin 0,0)
-- `x: "50%", y: "30%"` = same horizontal center, 20% above center (y-axis offset)
-- Think of `50%` as the center point, then offset from there
-
-For the CSS coordinate system:
-- `x: "0%"` = left edge, `x: "100%"` = right edge
-- `y: "0%"` = top edge, `y: "100%"` = bottom edge
-- The hint icon is centered on this point via `transform: translate(-50%, -50%)`
-
-**Best Practice:** Position hints by visual testing. Place the hint slightly above or beside the interactive element so it doesn't obscure the draggable point.
-
-**Common positions for centered visualizations:**
-- `{ x: "50%", y: "30%" }` — center horizontally, above center (good for unit circle point at angle ~0-90°)
-- `{ x: "50%", y: "50%" }` — exact center (default)
-- `{ x: "70%", y: "50%" }` — right of center
-- `{ x: "30%", y: "50%" }` — left of center
-
-
-### Critical Rule: White Backgrounds for Visualizations
-
-**ALL visualization components MUST use a white (`#FFFFFF`) or very light neutral background.** Never use colored, dark, or gradient backgrounds behind charts, diagrams, or interactive visuals.
-
-This ensures:
-- Maximum readability and contrast for data elements
-- Clean, professional appearance
-- Consistent look across all visualizations
-- Accessibility for all users
-
-```tsx
-// WRONG — colored or dark background on visualization
-<div style={{ background: '#1a1a2e' }}>
-    <DataVisualization type="bar" data={...} />
-</div>
-
-// WRONG — gradient background on visualization
-<div style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}>
-    <Cartesian2D plots={[...]} />
-</div>
-
-// CORRECT — white/clean background (default behavior, no wrapper needed)
-<Block id="chart" padding="sm" hasVisualization>
-    <DataVisualization type="bar" data={...} height={320} />
-</Block>
-```
-
-**This applies to:**
-- All chart/graph components (`DataVisualization`, `Cartesian2D`, `DesmosGraph`, etc.)
-- All diagram components (`FlowDiagram`, `MatrixVisualization`, etc.)
-- All custom wrapper visualization components
-- SVG and Canvas-based custom visuals
-
-### Critical Rule: No Gradients — Use Flat Muted Colors
-
-**NEVER use gradient backgrounds or gradient colors in any component — whether custom or pre-built.** Always use **flat, solid colors** with **muted, not overly saturated tones**.
-
-This ensures:
-- A clean, modern, distraction-free learning environment
-- Content and data remain the visual focus
-- Consistent, professional aesthetic across the lesson
-
-**Rules:**
-1. **No gradient backgrounds** — no `linear-gradient()`, `radial-gradient()`, or CSS gradient functions anywhere
-2. **No gradient fills** in SVG, Canvas, or custom components
-3. **Use muted, desaturated colors** — avoid pure/vibrant primaries like `#FF0000`, `#00FF00`, `#0000FF`
-4. **Prefer soft color palettes** — use colors with reduced saturation (HSL saturation < 70%)
-5. **Good color examples:** `#6366f1` (soft indigo), `#3cc499` (muted teal), `#f59e0b` (warm amber), `#8b5cf6` (soft violet)
-6. **Bad color examples:** `#FF0000` (pure red), `#00FF00` (pure green), `#0000FF` (pure blue), neon colors
-
-```tsx
-// WRONG — gradient background
-<div style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}>
-    <h2>Section Title</h2>
-</div>
-
-// WRONG — overly saturated colors
-<DataVisualization
-    data={[{ label: 'A', value: 10, color: '#FF0000' }]}
-    color="#00FF00"
-/>
-
-// CORRECT — flat muted colors
-<DataVisualization
-    data={[
-        { label: 'A', value: 10, color: '#6366f1' },
-        { label: 'B', value: 20, color: '#3cc499' },
-    ]}
-    color="#6366f1"
-/>
-
-// CORRECT — soft color palette for charts
-const CHART_COLORS = [
-    '#6366f1', // soft indigo
-    '#3cc499', // muted teal
-    '#f59e0b', // warm amber
-    '#8b5cf6', // soft violet
-    '#ec4899', // soft pink
-    '#14b8a6', // muted cyan
-];
-```
-
 ### Critical Rule: Safe SVG Dimensions and Anti-Clipping
 
 **When creating custom `<svg>` visual components, ALWAYS establish a safe `viewBox` and width/height that securely encompasses all shapes, texts, and potential animations/transforms.**
@@ -1011,6 +339,9 @@ This ensures:
 **Rules:**
 1. Leave plenty of padded space or margin (at least `20px` to `40px`) around the perimeter of visual items.
 2. If text may change or grow (e.g. reactive variables or bold interactive states), ensure the `viewBox` bounds can accommodate the maximum possible width of that text.
+3. **Budget label width before you place the plot.** Text is roughly `characters × fontSize × 0.6` units wide (`"Positive"` at 12px ≈ 58 units). Reserve gutters for every label that sits beside the drawing, then size the plot with what's left: `plotWidth = viewBoxWidth − leftGutter − rightGutter`. Never pick a round plot size and hope the labels fit next to it.
+4. **Anchor edge labels back toward the ink.** Right of the plot → `textAnchor="end"` at `x = viewBoxWidth − pad`. Left of the plot → `textAnchor="start"` at `x = pad`. Centered under a column → `textAnchor="middle"` with the x clamped so the half-width still fits.
+5. **Check every reachable state.** Walk each slider/drag to its minimum and maximum and confirm the longest string still renders whole. A label that fits at the default value and is sliced at the extreme is a failed visualization.
 
 ```tsx
 // WRONG — text at X=290 will be clipped by the strict width=300 boundary
@@ -1022,75 +353,32 @@ This ensures:
 <svg width={340} height={200} viewBox="0 0 340 200">
     <text x={290} y={100}>Hypotenuse</text>
 </svg>
+
+// WRONG — plot ends at 520 inside a 560-wide viewBox; "Positive" needs ~58 more
+// units and renders as "Posit". The SVG clips it silently — no error, no warning.
+<text x={chartX + chartWidth + 12} y={chartY + 20} fontSize="12">Positive</text>
+
+// CORRECT — gutter reserved first, label anchored back toward the plot
+const PAD = 24, RIGHT_GUTTER = 72;
+const chartWidth = VIEWBOX_WIDTH - PAD - RIGHT_GUTTER;
+<text x={VIEWBOX_WIDTH - PAD} y={chartY + 20} textAnchor="end" fontSize="12">Positive</text>
 ```
 
 ## Available Layouts
 
 Import from `@/components/layouts`.
 
+**Layout prop values are closed sets — use ONLY the values listed below.** Do not
+guess additional variants: passing an unlisted value (e.g. a size a sibling layout
+happens to accept) is a TypeScript error that fails the build. The exact unions:
+`StackLayout.maxWidth`: `none | sm | md | lg | xl | 2xl | full` ·
+`SplitLayout.gap` / `GridLayout.gap`: `none | sm | md | lg | xl` ·
+`SplitLayout.ratio`: `1:1 | 1:2 | 2:1 | 1:3 | 3:1 | 2:3 | 3:2` ·
+`GridLayout.columns`: `2–6` · `align`: `start | center | end | stretch`.
+
 - `StackLayout` — single column, use `maxWidth` prop (`sm`, `md`, `lg`, `xl`, `2xl`, `full`)
 - `SplitLayout` — side-by-side (ideal for text + visual), use `ratio` (`1:1`, `1:2`, `2:1`, `1:3`, `3:1`, `2:3`, `3:2`), `gap` (`none`, `sm`, `md`, `lg`, `xl`), `align` (`start`, `center`, `end`, `stretch`)
 - `GridLayout` — grid of items (ideal for visual galleries), use `columns` (2–6), `gap`, `mobileColumns`
-- `ScrollytellingLayout` — sticky visual + scrolling text steps; use `<ScrollStep>` for each text step and `<ScrollVisual>` for the visualization; `varName` writes the active 0-based step index to a global variable; props: `visualPosition`, `visualWidth`, `gap`, `threshold`, `onStepChange`
-- `SlideLayout` — one-slide-at-a-time deck with animated transitions, arrow buttons, dot indicators, keyboard navigation, and an optional slide counter; use `<Slide>` for each slide; `varName` writes the active 0-based slide index to a global variable; props: `height` (`sm`, `md`, `lg`, `xl`, `auto`), `transition` (`fade`, `slide`, `none`), `showArrows`, `arrowPosition` (`inside`, `outside`), `showDots`, `showCounter`, `onSlideChange`
-- `StepLayout` — progressive-disclosure layout that reveals content one step at a time; completed steps remain visible above the current one; each step shows a "Continue →" button (or auto-advances when a question is answered correctly); use `<Step>` for each step; `varName` writes the 0-based revealed step index to a global variable; props: `revealLabel`, `showProgress` (text counter, default `true`), `allowBack`, `onStepReveal`
-
-### StepLayout (Progressive Disclosure with Questions)
-
-`StepLayout` reveals lesson content one step at a time. Steps stack vertically — completed steps stay visible above the current one so learners retain context. Two step modes are supported:
-
-1. **Normal step** — shows a "Continue →" button to advance.
-2. **Question step** (`autoAdvance`) — hides the button entirely; the next step appears automatically once the learner gives the correct answer.
-
-**Step props:**
-
-| Prop | Type | Default | Purpose |
-|------|------|---------|--------|
-| `revealLabel` | `string` | layout-level `revealLabel` | Override the Continue button label for this step |
-| `completionVarName` | `string` | — | Variable that must be truthy before the learner can proceed (gates the Continue button) |
-| `autoAdvance` | `boolean` | `false` | When `true` + `completionVarName` is set, hides the Continue button and auto-reveals next step on correct answer |
-
-```tsx
-<StepLayout varName="stepProgress" showProgress={false}>
-    {/* Question step — auto-advances on correct answer */}
-    <Step completionVarName="myAnswer" autoAdvance>
-        <Block id="step-question" padding="sm">
-            <EditableParagraph id="para-step-question" blockId="step-question">
-                If you have two apples and someone gives you two more, you now have a total of{" "}
-                <InlineClozeInput
-                    varName="myAnswer"
-                    correctAnswer="4"
-                    {...clozePropsFromDefinition(getVariableInfo('myAnswer'))}
-                />
-                {" "}apples.
-            </EditableParagraph>
-        </Block>
-    </Step>
-
-    {/* Normal step — shows Continue button */}
-    <Step>
-        <Block id="step-exploration" padding="sm">
-            <EditableParagraph id="para-step-exploration" blockId="step-exploration">
-                Correct! Now let's explore further.
-            </EditableParagraph>
-        </Block>
-    </Step>
-
-    {/* Gated step — Continue button disabled until activity is done */}
-    <Step completionVarName="nextAnswer">
-        <Block id="step-completion" padding="sm">
-            <EditableParagraph id="para-step-completion" blockId="step-completion">
-                Complete this to continue:{" "}
-                <InlineClozeInput
-                    varName="nextAnswer"
-                    correctAnswer="yes"
-                    {...clozePropsFromDefinition(getVariableInfo('nextAnswer'))}
-                />
-            </EditableParagraph>
-        </Block>
-    </Step>
-</StepLayout>
-```
 
 ### SplitLayout with Multiple Components Per Side
 
@@ -1102,11 +390,7 @@ Import from `@/components/layouts`.
     <div className="space-y-4">
         <Block id="left-description" padding="sm">
             <EditableParagraph id="para-left-desc" blockId="left-description">
-                Description text with an interactive value of{" "}
-                <InlineScrubbleNumber
-                    varName="myVar"
-                    {...numberPropsFromDefinition(getVariableInfo('myVar'))}
-                />{" "}units.
+                Description text.
             </EditableParagraph>
         </Block>
         <Block id="left-formula" padding="sm">
@@ -1140,27 +424,76 @@ Import from `@/components/layouts`.
 
 **NEVER use** plain `<p>`, `<h1>`, `<h2>`, `<h3>` HTML tags. Always use the editable components above.
 
-### Inline Interactive Components
+### Inline Components
 
-- `InlineScrubbleNumber` — draggable inline number bound to global variable
-- `InlineClozeInput` — fill-in-the-blank input with answer validation, bound to global variable
-- `InlineClozeChoice` — dropdown choice with answer validation, bound to global variable
-- `InlineToggle` — click to cycle through options, bound to global variable
-- `InlineTooltip` — hover to show tooltip/definition (no variable store)
-- `InlineTrigger` — click to snap a variable to a specific value (connective, emerald)
 - `InlineHyperlink` — click to open external URL or scroll to a block on page (connective, emerald)
-- `InlineSpotColor` — colored text highlight
-- `InlineLinkedHighlight` — bidirectional highlighting
 - `Table` — block-level table with inline components in cells (import from `@/components/atoms`)
 
 ### Math Components
 
-- `InlineFormula` — inline math formula with colored variables (no variable store, import from `@/components/atoms`)
-- `FormulaBlock` — block-level math display with interactive elements (import from `@/components/molecules`)
+- `InlineFormula` — static inline math formula (import from `@/components/atoms`)
+- `FormulaBlock` — static block-level math display (import from `@/components/molecules`)
 
-### UI Components (import from `@/components/molecules`)
+### Standard UI Components (shadcn/ui — import from `@/components/atoms`)
 
-- `InteractionLegend` — collapsible "How to read this article" banner with live mini-demos of each interaction type (drag a number, fill in a blank, pick from a dropdown). **Automatically rendered** at the top of every article by `BlockRenderer` — the AI should never add it manually. Uses `localStorage` to remember whether the user has already seen it (starts expanded for first-timers, collapsed thereafter).
+The full shadcn/ui kit ships with the project and is exported from the same barrel as everything else. Use these for ordinary web-page interactivity — controls, panels, navigation, answer entry:
+
+| Component | Use for |
+|---|---|
+| `Input`, `Textarea` | Typed answers, numeric entry |
+| `Select` (`SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`) | Dropdown choice |
+| `RadioGroup`, `RadioGroupItem`, `Checkbox`, `Switch` | Single/multiple choice, on-off options |
+| `Slider` | Dragging a number through a range |
+| `Button` | Check answer, reset, step, reveal |
+| `Tabs`, `Accordion`, `Collapsible` | Grouping content the student can switch between or expand |
+| `Card`, `Alert`, `Badge`, `Separator`, `Progress` | Panels, callouts, labels, dividers, progress |
+| `Dialog`, `Popover`, `HoverCard`, `Tooltip` | Overlays and hover help |
+
+**Rules:**
+1. **Lesson TEXT still uses the editable components** (`EditableParagraph`, `EditableH1`-`H3`). Never put lesson prose inside a `Card`/`Alert` as raw text — the teacher could not edit it.
+2. **Keep shared values in the variable store** so a control and a visual stay in sync: read with `useVar`, write with `useSetVar` (see *Critical Rule: Global Variables*). Local `useState` is fine for state nothing else needs.
+3. `Table` imported from `@/components/atoms` is the lesson table component, not shadcn's table primitive.
+
+```tsx
+// A control panel driving a visual, and a typed answer with a check button
+import { useState } from "react";
+import { Input, Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/atoms";
+import { useVar, useSetVar } from "@/stores";
+
+const RadiusControls = () => {
+    const radius = useVar("circleRadius", 3);
+    const setVar = useSetVar();
+    return (
+        <div className="flex items-center gap-3">
+            <Select value={String(radius)} onValueChange={(v) => setVar("circleRadius", Number(v))}>
+                <SelectTrigger className="w-32"><SelectValue placeholder="Radius" /></SelectTrigger>
+                <SelectContent>
+                    {[1, 2, 3, 4, 5].map((r) => (
+                        <SelectItem key={r} value={String(r)}>{r} cm</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={() => setVar("circleRadius", 3)}>Reset</Button>
+        </div>
+    );
+};
+
+const AreaCheck = () => {
+    const [answer, setAnswer] = useState("");
+    const [result, setResult] = useState<string | null>(null);
+    return (
+        <div className="flex items-center gap-2">
+            <Input value={answer} onChange={(e) => setAnswer(e.target.value)} className="w-28" placeholder="Area" />
+            <Button onClick={() => setResult(Math.abs(Number(answer) - 28.27) < 0.5 ? "Correct" : "Not quite — try again")}>
+                Check
+            </Button>
+            {result && <span className="text-sm text-slate-600">{result}</span>}
+        </div>
+    );
+};
+```
+
+Wrap such a component in its own `<Block>` like any other component, and define its variables in `src/data/variables.ts` first.
 
 ### Visual Components (import from `@/components/atoms`)
 
@@ -1214,349 +547,6 @@ Import from `@/components/layouts`.
   - `app`: `"classic"` | `"graphing"` | `"geometry"` | `"3d"` | `"cas"`
   - `materialId`, `commands`, `width`, `height`
 
-### Feedback Components (import from `@/components/atoms`)
-
-- `InlineFeedback` — A lightweight inline wrapper that shows feedback as flowing text right next to the cloze input or choice
-
-**InlineFeedback** wraps a cloze component and watches a variable from the store. Feedback appears automatically inline when the student **submits** their answer — no "Check Answer" button needed. The feedback flows naturally as text within the paragraph.
-
-> **Submission timing**: The variable store is only updated when the student actually submits, NOT while typing. For `InlineClozeInput`, submission happens on **Enter key**, **blur (clicking away)**, or when the typed value **auto-matches** the correct answer. For `InlineClozeChoice`, **selecting a dropdown option** counts as submission. This means feedback never appears while the student is still typing.
-
-**Key behaviours:**
-- Feedback appears **inline** right after the cloze component as flowing paragraph text
-- **Correct answer**: Green text with an encouraging message that explains WHY the answer is correct
-- **Incorrect answer**: Amber text with failure message + hint + optional review link — flows naturally in the sentence
-- Feedback animates in smoothly with a fade transition
-- The review link (blue) scrolls smoothly to the relevant content block and flashes a highlight ring
-- **No icons or backgrounds** — feedback is styled as natural paragraph text with subtle color
-
-**InlineFeedback Props:**
-
-| Prop | Type | Default | Purpose |
-|------|------|---------|--------|
-| `varName` | `string` | *(required)* | Variable to watch (must match the cloze component's `varName`) |
-| `correctValue` | `string` | *(required)* | Expected correct value |
-| `position` | `'terminal' \| 'mid' \| 'standalone'` | `'terminal'` | Position of blank in sentence — affects default feedback style |
-| `caseSensitive` | `boolean` | `false` | Whether comparison is case-sensitive |
-| `successMessage` | `string` | *(varies by position)* | Message shown on correct answer — celebrate and explain WHY (no trailing period) |
-| `failureMessage` | `string` | *(varies by position)* | Message shown on wrong answer — be encouraging (no trailing period) |
-| `hint` | `string` | — | Hint that flows after `failureMessage` — guide discovery (no trailing period) |
-| `reviewBlockId` | `string` | — | Block ID to scroll to for reviewing the concept |
-| `reviewLabel` | `string` | `"Review this concept"` | Label for the review link |
-
-**Position determines feedback style:**
-
-| Position | When to use | Default success | Default failure |
-|:---|:---|:---|:---|
-| `terminal` | Blank ends the sentence | `"— exactly right!"` | `"— not quite."` |
-| `mid` | Words follow the blank | `"✓"` | `"✗"` |
-| `standalone` | Question ends with `?` then blank | `"That's right!"` | `"Not quite!"` |
-
----
-
-### Feedback Position Examples
-
-**1. Terminal Position (blank at end) — PREFERRED:**
-
-Blank ends the sentence, so detailed feedback is natural. Period comes AFTER the InlineFeedback in JSX.
-
-```tsx
-<EditableParagraph id="para-q1" blockId="q1">
-    Because the diameter passes through the center, a circle with radius 3 has diameter{" "}
-    <InlineFeedback
-        varName="fbCircleDiameter"
-        correctValue="6"
-        position="terminal"
-        successMessage="— exactly! The diameter is always twice the radius, so 2 × 3 = 6"
-        failureMessage="— not quite."
-        hint="The diameter stretches all the way across through the center"
-    >
-        <InlineClozeInput varName="fbCircleDiameter" correctAnswer="6"
-            {...clozePropsFromDefinition(getVariableInfo('fbCircleDiameter'))} />
-    </InlineFeedback>.
-</EditableParagraph>
-// Renders: "...has diameter 6 — exactly! The diameter is always twice the radius, so 2 × 3 = 6."
-```
-
-**2. Mid-sentence Position (words after blank):**
-
-Feedback must be ULTRA-BRIEF to maintain sentence flow. Use symbols or very short phrases.
-
-```tsx
-<EditableParagraph id="para-q2" blockId="q2">
-    An interior cell has exactly{" "}
-    <InlineFeedback
-        varName="fbNeighbors"
-        correctValue="4"
-        position="mid"
-        hint="Count: up, down, left, right"
-    >
-        <InlineClozeInput varName="fbNeighbors" correctAnswer="4"
-            {...clozePropsFromDefinition(getVariableInfo('fbNeighbors'))} />
-    </InlineFeedback>{" "}
-    neighbors.
-</EditableParagraph>
-// Correct renders: "An interior cell has exactly 4 ✓ neighbors."
-// Wrong renders: "An interior cell has exactly 3 ✗ Count: up, down, left, right neighbors."
-```
-
-**3. Standalone Position (question then blank):**
-
-Question ends with `?`, so feedback is a natural conversational response.
-
-```tsx
-<EditableParagraph id="para-q3" blockId="q3">
-    How many neighbors does an interior cell have?{" "}
-    <InlineFeedback
-        varName="fbNeighborCount"
-        correctValue="4"
-        position="standalone"
-        successMessage="Correct! The four cardinal directions: up, down, left, and right"
-        failureMessage="Not quite!"
-        hint="Think about the directions you can move on a grid"
-    >
-        <InlineClozeInput varName="fbNeighborCount" correctAnswer="4"
-            {...clozePropsFromDefinition(getVariableInfo('fbNeighborCount'))} />
-    </InlineFeedback>
-</EditableParagraph>
-// Renders: "How many neighbors...? 4 Correct! The four cardinal directions..."
-```
-
----
-
-### Key Rules for InlineFeedback:
-
-**Matching rules:**
-- The `varName` in `InlineFeedback` must match the `varName` in the cloze component inside
-- The `correctValue` in `InlineFeedback` must match the `correctAnswer` of the cloze component
-
-**Position rules:**
-- **Prefer terminal position** — restructure questions so the blank ends the sentence
-- **For mid-sentence**: Keep feedback ultra-short; consider omitting custom messages to use `✓`/`✗` defaults
-- **Read the full sentence aloud** — does it sound natural with feedback inserted?
-
-**Punctuation rules:**
-- Put the period AFTER `</InlineFeedback>` in JSX, not inside the message
-- **Never use trailing periods** in messages — the JSX template handles punctuation
-- Use em dashes (—) or commas to connect feedback naturally: `"— exactly because..."`
-- **NEVER use `--` (double hyphens)** — use `—` (em dash) instead
-
-**Feedback curating rules:**
-- **Success messages**: Start with celebration ("Exactly!", "That's right!"), then explain WHY
-- **Failure messages**: Be encouraging ("Not quite!", "Almost!") — never discouraging
-- **Hints**: Guide discovery with concrete scaffolding, not just restating the question
-- **Avoid word duplication** — don't repeat words that appear after the blank
-
-**Technical rules:**
-- Works with `InlineClozeInput` (text fill-in) and `InlineClozeChoice` (dropdown)
-- Define answer variables in `variables.ts` just like any other cloze variable
-- Feedback appears only after submission — not during typing
-
----
-
-### Visual Hints in Feedback (Guided Discovery)
-
-When a student answers incorrectly, you can guide them to **discover the answer themselves** through an interactive visualization. The `visualizationHint` prop on `InlineFeedback` creates a button that, when clicked, navigates to a visualization and shows step-by-step interactive hints.
-
-**InlineFeedback with visualizationHint example:**
-
-```tsx
-<InlineFeedback
-    varName="fbUnitCircleCos"
-    correctValue="-1"
-    position="standalone"
-    failureMessage="Hmm, not quite."
-    hint="Think about where the point sits at 180°"
-    visualizationHint={{
-        blockId: "unit-circle-viz",
-        hintKey: "feedback-unit-circle-hint",
-        steps: [
-            {
-                gesture: "drag-circular",
-                label: "Drag the red point upward toward the top — watch cos shrink toward zero",
-                position: { x: "70%", y: "35%" },
-                dragPath: { type: "arc", startAngle: 0, endAngle: -90, radius: 40 },
-                completionVar: "theta",
-                completionValue: 90,
-                completionTolerance: 15,
-            },
-            {
-                gesture: "drag-circular",
-                label: "Keep dragging to the left — notice cos becomes negative!",
-                position: { x: "30%", y: "50%" },
-                dragPath: { type: "arc", startAngle: -90, endAngle: -180, radius: 40 },
-                completionVar: "theta",
-                completionValue: 180,
-                completionTolerance: 20,
-            },
-        ],
-        label: "Discover it yourself",
-        resetVars: { theta: 0 },
-    }}
->
-    <InlineClozeChoice varName="fbUnitCircleCos" correctAnswer="-1" options={["0", "1", "-1"]} />
-</InlineFeedback>
-```
-
-### Critical Rules for Visual Hints
-
-| Rule | Description | Bad Example | Good Example |
-|:---|:---|:---|:---|
-| **1. Question must match the visualization journey** | The question answer should be discoverable through the guided steps | Asking cos(0°) but guiding to 180° | Asking cos(180°) and guiding from 0° → 90° → 180° |
-| **2. Always reset to starting position** | Use `resetVars` to reset the visualization when button clicked | No resetVars (user may have moved things) | `resetVars: { theta: 0 }` |
-| **3. Steps must be actionable** | Every step must describe a concrete action the user performs | "Look at where the point is" | "Drag the point upward to the top" |
-| **4. Steps must be verifiable** | Each step needs `completionVar`, `completionValue`, and `completionTolerance` | "Drag the point" (no way to verify) | "Drag to 90°" with `completionVar: "theta", completionValue: 90` |
-| **5. Steps auto-advance on completion** | The hint watches the variable and advances when target is reached | Manual next buttons | Auto-advance when `theta` reaches 90° (±15°) |
-| **6. Clear, concise labels** | Step labels should be short and describe action + observation | Long explanations | "Drag upward — watch cos shrink toward zero" |
-
-### Step Properties for Visual Hints
-
-| Property | Type | Required | Purpose |
-|:---|:---|:---|:---|
-| `gesture` | `GestureType` | Yes | Animation type: `"drag"`, `"drag-circular"`, `"drag-vertical"`, `"click"`, etc. |
-| `label` | `string` | Yes | Short instruction: action + what to observe |
-| `position` | `{ x: string, y: string }` | No | Position of hint icon (percentage, e.g., `{ x: "70%", y: "35%" }`) |
-| `dragPath` | `DragPathConfig` | No | Animation path for the gesture hint |
-| `completionVar` | `string` | **Yes*** | Variable to watch for step completion |
-| `completionValue` | `number` | **Yes*** | Target value the variable should reach |
-| `completionTolerance` | `number` | No | Acceptable range (±tolerance), default: 15 |
-
-*Required for meaningful step progression. Steps without completion conditions advance on any interaction.
-
-### VisualizationHintConfig Properties
-
-| Property | Type | Required | Purpose |
-|:---|:---|:---|:---|
-| `blockId` | `string` | Yes | Block ID of the visualization to scroll to |
-| `hintKey` | `string` | Yes | Unique key for the hint sequence |
-| `steps` | `HintStep[]` | Yes | Array of guided steps |
-| `label` | `string` | No | Button label (default: "See it in action") |
-| `resetVars` | `Record<string, number \| string \| boolean>` | **Yes*** | Variables to reset when button clicked |
-
-*Always include `resetVars` to ensure the visualization starts in the correct state for the guided journey.
-
-### Design Workflow for Visual Hints
-
-1. **Design the question** — What concept are you testing? What answer should the student discover?
-2. **Plan the journey** — What interactive steps lead to discovering the answer?
-3. **Identify the variables** — Which variables change during the journey? What are the milestone values?
-4. **Write the steps** — Each step: action verb + target + observation
-5. **Set completion conditions** — `completionVar`, `completionValue`, `completionTolerance` for each step
-6. **Add resetVars** — Reset all relevant variables to the starting position
-
-### Example: Teaching cos(180°) through guided exploration
-
-**Question**: "What is cos(180°)?"
-**Answer**: -1
-
-**Journey**:
-1. Start at θ = 0° (rightmost point, cos = 1)
-2. Drag to θ = 90° (top, cos = 0) — student sees cos decrease
-3. Drag to θ = 180° (leftmost, cos = -1) — student discovers the answer
-
-**Steps**:
-```tsx
-steps: [
-    {
-        gesture: "drag-circular",
-        label: "Drag the red point upward toward the top — watch cos shrink toward zero",
-        completionVar: "theta", completionValue: 90, completionTolerance: 15,
-    },
-    {
-        gesture: "drag-circular",
-        label: "Keep dragging to the left — notice cos becomes -1 at 180°!",
-        completionVar: "theta", completionValue: 180, completionTolerance: 20,
-    },
-],
-resetVars: { theta: 0 },
-```
-
-## Visual Assessment Tasks
-
-Beyond text-based questions (`InlineClozeInput`, `InlineClozeChoice`), you can create **interactive visual tasks** where students demonstrate understanding by manipulating elements in a visualization — drawing lines, positioning points, or constructing shapes.
-
-### Key Principles
-
-1. **Don't reveal the answer in instructions.** Say "Draw a radius" not "Draw a line from center to edge"
-2. **Use tolerance-based validation.** Students aren't precision instruments — accept answers within reasonable bounds (typically ±5-10%)
-3. **Provide immediate visual feedback.** Correct answers glow green; incorrect attempts show amber with hints
-4. **Allow multiple attempts.** Visual tasks should let students try again with progressive hints
-
-### Task Types
-
-| Type | Student Action | Validation Approach |
-|:---|:---|:---|
-| **Draw/Position** | Drag endpoint to location | `distance(point, target) < tolerance` |
-| **Construct** | Move multiple points | Validate geometric properties (area, angle, length) |
-| **Adjust to value** | Change parameter to hit target | Check final value within range |
-
-### Implementation Pattern
-
-Visual assessment tasks use `movablePoints` in `Cartesian2D` with an `onChange` callback that validates the position and updates a status variable:
-
-```tsx
-// 1. Define status variable in variables.ts
-radiusTaskStatus: {
-    defaultValue: 'pending',
-    type: 'text',
-    label: 'Radius Task Status',
-},
-
-// 2. Create validation function
-const validateRadius = useCallback((endpoint: [number, number]) => {
-    const distanceFromCenter = distance(endpoint, [0, 0]);
-    const isOnCircle = Math.abs(distanceFromCenter - circleRadius) < tolerance;
-    
-    if (isOnCircle) {
-        setVar("radiusTaskStatus", "correct");
-    } else if (distanceFromCenter < circleRadius) {
-        setVar("radiusTaskStatus", "inside");
-    } else {
-        setVar("radiusTaskStatus", "outside");
-    }
-}, [setVar, circleRadius, tolerance]);
-
-// 3. Visualization with movable point
-<Cartesian2D
-    height={350}
-    viewBox={{ x: [-5, 5], y: [-5, 5] }}
-    movablePoints={[{
-        initial: [1.5, 1.5],
-        color: lineColor,
-        onChange: (point) => validateRadius(point as [number, number]),
-    }]}
-    dynamicPlots={([endpoint]) => [
-        { type: "circle", center: [0, 0], radius: circleRadius, color: "#64748b" },
-        { type: "point", x: 0, y: 0, color: "#3b82f6" },
-        { type: "segment", point1: [0, 0], point2: endpoint, color: lineColor, weight: 3 },
-    ]}
-/>
-
-// 4. Reactive feedback component
-function RadiusTaskFeedback() {
-    const status = useVar("radiusTaskStatus", "pending") as string;
-    if (status === "correct") {
-        return <span className="text-green-600 font-medium">Excellent! That is a valid radius.</span>;
-    }
-    if (status === "inside") {
-        return <span className="text-amber-600">The endpoint is inside the circle. A radius must reach the edge.</span>;
-    }
-    if (status === "outside") {
-        return <span className="text-amber-600">The endpoint is outside the circle. Pull it back to touch the edge.</span>;
-    }
-    return <span className="text-slate-500">Drag the point to complete the radius.</span>;
-}
-```
-
-### Reference Demo
-
-See `src/data/sections/visualAssessmentDemo.tsx` for complete working examples:
-
-- **Draw a Radius** — drag endpoint to circle edge
-- **Find the Midpoint** — position a point at segment center
-- **Position the Vertex** — adjust triangle apex to achieve target area (9 sq units)
-- **Construct a Perpendicular** — create a 90° angle from a line
-
 ### Required Props for All Text Components
 
 Every `EditableParagraph` and `EditableH1/H2/H3` MUST have:
@@ -1572,6 +562,47 @@ Every `EditableParagraph` and `EditableH1/H2/H3` MUST have:
     Content here
 </EditableParagraph>
 ```
+
+## VisualOptionCards (visual chooser — temporary block)
+
+`VisualOptionCards` (import from `@/components/organisms`) is a teacher-facing block that offers 2-3 visual options for a section. Students never see it (it renders nothing in preview mode). Place it in its own `<Block>` exactly where the visual will go; when the teacher picks a card, the block is replaced by the built visual under the SAME block id, so the chooser must never remain in a finished section.
+
+```tsx
+import { VisualOptionCards } from "@/components/organisms";
+
+<Block id="circle-area-visual" padding="sm">
+    <VisualOptionCards
+        blockId="circle-area-visual"
+        intro="Pick how your students will explore the area of a circle."
+        cards={[
+            {
+                id: "sectors",
+                title: "A circle cut into sectors that rearrange into a rectangle",
+                looks: "A circle divided into equal slices. Next to it, the same slices laid out in a row that looks more and more like a rectangle as the slices get thinner.",
+                manipulate: "Change the number of slices and watch the row straighten out",
+                reveals: "The rectangle's sides are the radius and half the circumference, so the area is pi times r squared",
+                recommended: true,
+            },
+            {
+                id: "grid",
+                title: "A circle on a square grid with the covered squares counted",
+                looks: "A circle drawn over graph paper; squares inside the circle are shaded and counted.",
+                manipulate: "Change the radius and read the count of shaded squares",
+                reveals: "The count grows with the square of the radius, not with the radius itself",
+                targetsMisconception: "Students think doubling the radius doubles the area",
+            },
+        ]}
+    />
+</Block>
+```
+
+| Prop | Type | Purpose |
+|------|------|---------|
+| `blockId` | `string` | The id of the `<Block>` this chooser lives in (the visual will replace this block) |
+| `intro` | `string` | Optional one-line prompt above the cards |
+| `cards` | `VisualOptionCard[]` | 2-3 options; each has `id`, `title`, `looks`, `manipulate`, `reveals`, optional `targetsMisconception`, and `recommended` on exactly one card |
+
+Write every card for a teacher, in plain language — no component names, coordinates or colour codes.
 
 ## Critical Rule: Section Structure (Flat Block Arrays)
 
@@ -1617,15 +648,12 @@ import { Block } from "@/components/templates";
 import { StackLayout, SplitLayout, GridLayout } from "@/components/layouts";
 import {
     EditableH1, EditableH2, EditableParagraph,
-    InlineScrubbleNumber, InlineClozeInput, InlineClozeChoice,
-    InlineToggle, InlineTooltip, InlineTrigger, InlineFormula,
+    InlineFormula,
     Table,
 } from "@/components/atoms";
-import { getVariableInfo, numberPropsFromDefinition, clozePropsFromDefinition, choicePropsFromDefinition, togglePropsFromDefinition } from "../variables";
 
 import { DataVisualization, ImageDisplay, FlowDiagram, MatrixVisualization } from "@/components/atoms";
 import { FormulaBlock } from "@/components/molecules";
-// InteractionLegend is auto-rendered by BlockRenderer — do NOT import or use it in sections
 import { DesmosGraph } from "@/components/organisms";
 
 // Store hooks for reactive visual wrappers
@@ -1643,34 +671,7 @@ export const mySectionBlocks: ReactElement[] = [
     <StackLayout key="layout-my-intro" maxWidth="xl">
         <Block id="my-intro" padding="sm">
             <EditableParagraph id="para-my-intro" blockId="my-intro">
-                Introduction text with an interactive value of{" "}
-                <InlineScrubbleNumber
-                    varName="myVar"
-                    {...numberPropsFromDefinition(getVariableInfo('myVar'))}
-                />
-                {" "}units.
-            </EditableParagraph>
-        </Block>
-    </StackLayout>,
-
-    // Assessment question with inline feedback
-    <StackLayout key="layout-my-q1" maxWidth="xl">
-        <Block id="my-question-initial" padding="md">
-            <EditableParagraph id="para-my-question-initial" blockId="my-question-initial">
-                Your question here with{" "}
-                <InlineFeedback
-                    varName="answer_my_q1"
-                    correctValue="expected"
-                    successMessage="Brilliant! That's exactly right"
-                    failureMessage="Almost there!"
-                    hint="Remember the key relationship from the introduction"
-                >
-                    <InlineClozeInput
-                        varName="answer_my_q1"
-                        correctAnswer="expected"
-                        {...clozePropsFromDefinition(getVariableInfo('answer_my_q1'))}
-                    />
-                </InlineFeedback>.
+                Introduction text.
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -1688,7 +689,7 @@ export const blocks: ReactElement[] = [
 
 ## Table (Table with Inline Components)
 
-`Table` renders a styled block-level HTML table. Each cell can hold **any React node** — text, numbers, or inline components like `InlineScrubbleNumber`, `InlineFormula`, `InlineClozeInput`, `InlineToggle`, `InlineLinkedHighlight`, etc.
+`Table` renders a styled block-level HTML table. Each cell can hold **any React node** — text, numbers, or inline components like `InlineFormula`, `InlineHyperlink`, etc.
 
 The table reads its accent colour from the global variable store (via `varName`) to stay in sync with the rest of the lesson.
 
@@ -1707,20 +708,14 @@ The table reads its accent colour from the global variable store (via `varName`)
                 {
                     cells: [
                         'Radius',
-                        <InlineScrubbleNumber
-                            varName="radius"
-                            {...numberPropsFromDefinition(getVariableInfo('radius'))}
-                        />,
+                        '5',
                         'The circle radius',
                     ],
                 },
                 {
                     cells: [
                         'Area formula',
-                        <InlineFormula
-                            latex="\pi r^2"
-                            colorMap={{}}
-                        />,
+                        <InlineFormula latex="\pi r^2" />,
                         'Computed from radius',
                     ],
                     highlight: true,
@@ -1770,64 +765,3 @@ The table reads its accent colour from the global variable store (via `varName`)
 - **Borderless**: `<Table bordered={false} ... />` — no borders, stripes only
 - **No header**: `<Table showHeader={false} ... />`
 - **No stripes**: `<Table striped={false} ... />`
-
-### Example Reference
-
-See `src/data/sections/tableDemo.tsx` and `src/data/exampleBlocks.tsx` (Table Component Demo section) for full working examples including:
-- Basic constants table with `InlineFormula` in cells
-- Cylinder parameters with `InlineScrubbleNumber` and reactive computed cells
-- Mixed inline components showcase (every component type in cells)
-- Compact and borderless variants
-
-## Linking Variables to Visual Components
-
-The most powerful pattern is connecting `InlineScrubbleNumber` / `InlineTrigger` in the text to a visual component so that dragging a number or clicking a trigger instantly updates the graphic.
-
-### Pattern: Reactive Visual Wrapper
-
-Create a small React component that reads from the store with `useVar` and passes values as props to the visual:
-
-```tsx
-import { useVar } from '@/stores';
-import { DataVisualization } from "@/components/atoms";
-
-function ReactiveDataViz() {
-    const value = useVar('myValue', 10) as number;
-
-    return (
-        <DataVisualization
-            type="bar"
-            data={[{ label: 'A', value }]}
-            height={320}
-        />
-    );
-}
-```
-
-Then use it inside a `SplitLayout` with scrubble numbers and triggers in the text:
-
-```tsx
-<SplitLayout key="layout-dataviz" ratio="1:1" gap="lg">
-    <Block id="dataviz-text" padding="sm">
-        <EditableParagraph id="para-dataviz" blockId="dataviz-text">
-            The value is{" "}
-            <InlineScrubbleNumber
-                varName="myValue"
-                {...numberPropsFromDefinition(getVariableInfo('myValue'))}
-            />
-            . You can{" "}
-            <InlineTrigger varName="myValue" value={5}>make it small</InlineTrigger>{" "}
-            or{" "}
-            <InlineTrigger varName="myValue" value={50} icon="zap">make it huge</InlineTrigger>.
-        </EditableParagraph>
-    </Block>
-    <Block id="dataviz-viz" padding="sm">
-        <ReactiveDataViz />
-    </Block>
-</SplitLayout>
-```
-
-### Important: Wrapper Components vs Block Arrays
-
-Reactive wrappers are **inner** components used inside a `<Block>`, not top-level block wrappers. The flat array rule still applies.
-

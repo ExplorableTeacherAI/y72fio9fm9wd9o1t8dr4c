@@ -1,0 +1,714 @@
+{
+  "version": 3,
+  "blockIds": [
+    "essentials-title",
+    "essentials-intro",
+    "essentials-heading",
+    "essentials-vocab-intro",
+    "essentials-vocab-centre",
+    "essentials-vocab-radius",
+    "essentials-vocab-diameter",
+    "essentials-vocab-chord",
+    "essentials-diagram-viz",
+    "essentials-vocab-arc",
+    "essentials-vocab-circumference",
+    "essentials-check-heading",
+    "essentials-question-radius",
+    "essentials-question-chord",
+    "inscribed-heading",
+    "inscribed-intro",
+    "inscribed-arc-concept",
+    "inscribed-explore-prompt",
+    "inscribed-discovery",
+    "inscribed-why-matters",
+    "inscribed-diagram-viz",
+    "inscribed-check-heading",
+    "inscribed-question",
+    "centre-heading",
+    "centre-intro",
+    "centre-explore-prompt",
+    "centre-discovery",
+    "centre-theorem-statement",
+    "centre-diagram-viz",
+    "centre-formula",
+    "centre-scrubble",
+    "centre-explanation",
+    "centre-question-relation",
+    "centre-question-calculation",
+    "segment-heading",
+    "segment-intro",
+    "segment-explore-prompt",
+    "segment-discovery",
+    "segment-theorem",
+    "segment-connection",
+    "segment-diagram-viz",
+    "segment-check-heading",
+    "segment-question",
+    "semicircle-heading",
+    "semicircle-intro",
+    "semicircle-explore-prompt",
+    "semicircle-discovery",
+    "semicircle-theorem",
+    "semicircle-why",
+    "semicircle-diagram-viz",
+    "semicircle-check-heading",
+    "semicircle-question",
+    "practice-heading",
+    "practice-intro",
+    "practice-problem1-heading",
+    "practice-problem1-diagram",
+    "practice-problem1-question",
+    "practice-problem2-heading",
+    "practice-problem2-diagram",
+    "practice-problem2-question",
+    "practice-problem3-heading",
+    "practice-problem3-diagram",
+    "practice-problem3-question",
+    "practice-problem4-heading",
+    "practice-problem4-diagram",
+    "practice-problem4-question",
+    "practice-problem5-heading",
+    "practice-problem5-diagram",
+    "practice-problem5-question",
+    "practice-conclusion"
+  ],
+  "rows": [
+    {
+      "id": "layout-essentials-title",
+      "type": "stack",
+      "columns": [
+        [
+          "essentials-title"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-essentials-intro",
+      "type": "stack",
+      "columns": [
+        [
+          "essentials-intro"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-essentials-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "essentials-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-essentials-vocab-intro",
+      "type": "stack",
+      "columns": [
+        [
+          "essentials-vocab-intro"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-essentials-diagram",
+      "type": "split",
+      "columns": [
+        [
+          "essentials-vocab-centre",
+          "essentials-vocab-radius",
+          "essentials-vocab-diameter",
+          "essentials-vocab-chord"
+        ],
+        [
+          "essentials-diagram-viz"
+        ]
+      ],
+      "props": {
+        "ratio": "1:1",
+        "gap": "lg",
+        "reverse": false,
+        "align": "start"
+      }
+    },
+    {
+      "id": "layout-essentials-vocab-arc",
+      "type": "stack",
+      "columns": [
+        [
+          "essentials-vocab-arc"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-essentials-vocab-circumference",
+      "type": "stack",
+      "columns": [
+        [
+          "essentials-vocab-circumference"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-essentials-check-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "essentials-check-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-essentials-question-radius",
+      "type": "stack",
+      "columns": [
+        [
+          "essentials-question-radius"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-essentials-question-chord",
+      "type": "stack",
+      "columns": [
+        [
+          "essentials-question-chord"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-inscribed-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "inscribed-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-inscribed-intro",
+      "type": "stack",
+      "columns": [
+        [
+          "inscribed-intro"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-inscribed-arc-concept",
+      "type": "stack",
+      "columns": [
+        [
+          "inscribed-arc-concept"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-inscribed-visualization",
+      "type": "split",
+      "columns": [
+        [
+          "inscribed-explore-prompt",
+          "inscribed-discovery",
+          "inscribed-why-matters"
+        ],
+        [
+          "inscribed-diagram-viz"
+        ]
+      ],
+      "props": {
+        "ratio": "1:1",
+        "gap": "lg",
+        "reverse": false,
+        "align": "start"
+      }
+    },
+    {
+      "id": "layout-inscribed-check-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "inscribed-check-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-inscribed-question",
+      "type": "stack",
+      "columns": [
+        [
+          "inscribed-question"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-centre-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "centre-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-centre-intro",
+      "type": "stack",
+      "columns": [
+        [
+          "centre-intro"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-centre-visualization",
+      "type": "split",
+      "columns": [
+        [
+          "centre-explore-prompt",
+          "centre-discovery",
+          "centre-theorem-statement"
+        ],
+        [
+          "centre-diagram-viz"
+        ]
+      ],
+      "props": {
+        "ratio": "1:1",
+        "gap": "lg",
+        "reverse": false,
+        "align": "start"
+      }
+    },
+    {
+      "id": "layout-centre-formula",
+      "type": "stack",
+      "columns": [
+        [
+          "centre-formula"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-centre-scrubble",
+      "type": "stack",
+      "columns": [
+        [
+          "centre-scrubble"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-centre-explanation",
+      "type": "stack",
+      "columns": [
+        [
+          "centre-explanation"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-centre-question-relation",
+      "type": "stack",
+      "columns": [
+        [
+          "centre-question-relation"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-centre-question-calculation",
+      "type": "stack",
+      "columns": [
+        [
+          "centre-question-calculation"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-segment-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "segment-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-segment-intro",
+      "type": "stack",
+      "columns": [
+        [
+          "segment-intro"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-segment-visualization",
+      "type": "split",
+      "columns": [
+        [
+          "segment-explore-prompt",
+          "segment-discovery",
+          "segment-theorem",
+          "segment-connection"
+        ],
+        [
+          "segment-diagram-viz"
+        ]
+      ],
+      "props": {
+        "ratio": "1:1",
+        "gap": "lg",
+        "reverse": false,
+        "align": "start"
+      }
+    },
+    {
+      "id": "layout-segment-check-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "segment-check-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-segment-question",
+      "type": "stack",
+      "columns": [
+        [
+          "segment-question"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-semicircle-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "semicircle-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-semicircle-intro",
+      "type": "stack",
+      "columns": [
+        [
+          "semicircle-intro"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-semicircle-visualization",
+      "type": "split",
+      "columns": [
+        [
+          "semicircle-explore-prompt",
+          "semicircle-discovery",
+          "semicircle-theorem",
+          "semicircle-why"
+        ],
+        [
+          "semicircle-diagram-viz"
+        ]
+      ],
+      "props": {
+        "ratio": "1:1",
+        "gap": "lg",
+        "reverse": false,
+        "align": "start"
+      }
+    },
+    {
+      "id": "layout-semicircle-check-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "semicircle-check-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-semicircle-question",
+      "type": "stack",
+      "columns": [
+        [
+          "semicircle-question"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-practice-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "practice-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-practice-intro",
+      "type": "stack",
+      "columns": [
+        [
+          "practice-intro"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-practice-problem1-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "practice-problem1-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-practice-problem1",
+      "type": "split",
+      "columns": [
+        [
+          "practice-problem1-diagram"
+        ],
+        [
+          "practice-problem1-question"
+        ]
+      ],
+      "props": {
+        "ratio": "1:1",
+        "gap": "lg",
+        "reverse": false,
+        "align": "start"
+      }
+    },
+    {
+      "id": "layout-practice-problem2-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "practice-problem2-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-practice-problem2",
+      "type": "split",
+      "columns": [
+        [
+          "practice-problem2-diagram"
+        ],
+        [
+          "practice-problem2-question"
+        ]
+      ],
+      "props": {
+        "ratio": "1:1",
+        "gap": "lg",
+        "reverse": false,
+        "align": "start"
+      }
+    },
+    {
+      "id": "layout-practice-problem3-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "practice-problem3-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-practice-problem3",
+      "type": "split",
+      "columns": [
+        [
+          "practice-problem3-diagram"
+        ],
+        [
+          "practice-problem3-question"
+        ]
+      ],
+      "props": {
+        "ratio": "1:1",
+        "gap": "lg",
+        "reverse": false,
+        "align": "start"
+      }
+    },
+    {
+      "id": "layout-practice-problem4-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "practice-problem4-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-practice-problem4",
+      "type": "split",
+      "columns": [
+        [
+          "practice-problem4-diagram"
+        ],
+        [
+          "practice-problem4-question"
+        ]
+      ],
+      "props": {
+        "ratio": "1:1",
+        "gap": "lg",
+        "reverse": false,
+        "align": "start"
+      }
+    },
+    {
+      "id": "layout-practice-problem5-heading",
+      "type": "stack",
+      "columns": [
+        [
+          "practice-problem5-heading"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    },
+    {
+      "id": "layout-practice-problem5",
+      "type": "split",
+      "columns": [
+        [
+          "practice-problem5-diagram"
+        ],
+        [
+          "practice-problem5-question"
+        ]
+      ],
+      "props": {
+        "ratio": "1:1",
+        "gap": "lg",
+        "reverse": false,
+        "align": "start"
+      }
+    },
+    {
+      "id": "layout-practice-conclusion",
+      "type": "stack",
+      "columns": [
+        [
+          "practice-conclusion"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
+      }
+    }
+  ]
+}

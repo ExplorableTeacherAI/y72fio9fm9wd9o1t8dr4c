@@ -183,7 +183,7 @@ export const InlineTrigger: React.FC<InlineTriggerProps> = ({
         // Use effectiveText, falling back to DOM textContent for robustness
         const text = effectiveText ?? containerRef.current?.textContent?.trim();
 
-        openTriggerEditor(
+        openTriggerEditor?.(
             {
                 text,
                 varName: effectiveVarName,

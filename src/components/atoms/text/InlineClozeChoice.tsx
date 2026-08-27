@@ -195,7 +195,7 @@ export const InlineClozeChoice: React.FC<InlineClozeChoiceProps> = ({
             elementPath = `choice-${blockId}-${varName ?? correctAnswer}`;
         }
 
-        openClozeChoiceEditor(
+        openClozeChoiceEditor?.(
             {
                 varName: effectiveVarName,
                 correctAnswer: effectiveCorrectAnswer,

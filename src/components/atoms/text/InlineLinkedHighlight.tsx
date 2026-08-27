@@ -230,7 +230,7 @@ export const InlineLinkedHighlight: React.FC<InlineLinkedHighlightProps> = ({
 
         const text = effectiveText ?? domTextRef.current ?? containerRef.current?.textContent?.trim() ?? '';
 
-        openLinkedHighlightEditor(
+        openLinkedHighlightEditor?.(
             {
                 varName: effectiveVarName,
                 highlightId: effectiveHighlightId,

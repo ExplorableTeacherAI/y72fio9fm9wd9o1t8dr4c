@@ -244,7 +244,7 @@ export const InlineTooltip: React.FC<InlineTooltipProps> = ({
 
         const text = effectiveText ?? containerRef.current?.textContent?.trim();
 
-        openTooltipEditor(
+        openTooltipEditor?.(
             {
                 text,
                 tooltip: effectiveTooltip,
