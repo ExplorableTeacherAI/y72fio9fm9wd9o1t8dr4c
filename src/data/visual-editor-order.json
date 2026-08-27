@@ -39,8 +39,8 @@
     "segment-intro",
     "segment-explore-prompt",
     "segment-discovery",
-    "segment-diagram-viz",
     "block-1787813393517",
+    "segment-diagram-viz",
     "segment-connection",
     "segment-check-heading",
     "segment-question",
@@ -416,7 +416,8 @@
       "columns": [
         [
           "segment-explore-prompt",
-          "segment-discovery"
+          "segment-discovery",
+          "block-1787813393517"
         ],
         [
           "segment-diagram-viz"
@@ -427,18 +428,6 @@
         "gap": "lg",
         "reverse": false,
         "align": "start"
-      }
-    },
-    {
-      "id": "layout-block-1787813393517",
-      "type": "stack",
-      "columns": [
-        [
-          "block-1787813393517"
-        ]
-      ],
-      "props": {
-        "maxWidth": "xl"
       }
     },
     {
