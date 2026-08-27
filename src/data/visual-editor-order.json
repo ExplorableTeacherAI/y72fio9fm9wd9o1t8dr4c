@@ -20,8 +20,8 @@
     "inscribed-arc-concept",
     "inscribed-explore-prompt",
     "inscribed-discovery",
-    "inscribed-why-matters",
     "inscribed-diagram-viz",
+    "inscribed-why-matters",
     "inscribed-check-heading",
     "inscribed-question",
     "centre-heading",
@@ -244,8 +244,7 @@
       "columns": [
         [
           "inscribed-explore-prompt",
-          "inscribed-discovery",
-          "inscribed-why-matters"
+          "inscribed-discovery"
         ],
         [
           "inscribed-diagram-viz"
@@ -263,6 +262,7 @@
       "type": "stack",
       "columns": [
         [
+          "inscribed-why-matters",
           "inscribed-check-heading"
         ]
       ],
