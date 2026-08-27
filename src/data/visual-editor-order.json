@@ -41,6 +41,7 @@
     "segment-discovery",
     "segment-theorem",
     "segment-diagram-viz",
+    "block-1787813393517",
     "segment-connection",
     "segment-check-heading",
     "segment-question",
@@ -428,6 +429,18 @@
         "gap": "lg",
         "reverse": false,
         "align": "start"
+      }
+    },
+    {
+      "id": "layout-block-1787813393517",
+      "type": "stack",
+      "columns": [
+        [
+          "block-1787813393517"
+        ]
+      ],
+      "props": {
+        "maxWidth": "xl"
       }
     },
     {

@@ -16,6 +16,7 @@ import {
     InlineFeedback,
     Cartesian2D,
     InteractionHintSequence,
+    EditableText,
 } from "@/components/atoms";
 import { FormulaBlock } from "@/components/molecules";
 import {
@@ -318,6 +319,14 @@ export const sameSegmentBlocks: ReactElement[] = [
             <SameSegmentVisualization />
         </Block>
     </SplitLayout>,
+
+    <StackLayout key="layout-block-1787813393517" maxWidth="xl">
+        <Block id="block-1787813393517" padding="sm">
+            <blockquote className="border-l-4 border-gray-300 pl-4 py-2">
+                <EditableText id="text-block-1787813393517" blockId="block-1787813393517" as="p" className="text-lg italic text-gray-600">Angles in the same segment are equal</EditableText>
+            </blockquote>
+        </Block>
+    </StackLayout>,
 
     // Quick check
     <StackLayout key="layout-segment-check-heading" maxWidth="xl">
